@@ -1,0 +1,25 @@
+// Fonts
+@import url('https://fonts.bunny.net/css?family=Nunito');
+
+// Variables
+@import 'variables';
+
+// Bootstrap
+@import 'bootstrap/scss/bootstrap';
+
+// Importar estilos base de Toastr
+@import 'toastr/toastr';
+
+// Corrección de visibilidad para Bootstrap 5
+#toast-container > .toast {
+    opacity: 1 !important;
+}
+
+// Personalización de colores para que no se vean "en blanco"
+.toast-success { background-color: #198754 !important; }
+.toast-error { background-color: #dc3545 !important; }
+.toast-info { background-color: #0dcaf0 !important; }
+
+.toast-message, .toast-title {
+    color: #ffffff !important;
+}
