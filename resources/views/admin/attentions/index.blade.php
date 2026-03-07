@@ -257,7 +257,7 @@
 </style>
 
 <script>
-function attentionMonitor() {
+window.attentionMonitor = function () {
     return {
         patients: [],
         filters: {
