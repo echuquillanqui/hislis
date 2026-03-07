@@ -209,8 +209,9 @@ class VoucherController extends Controller
             return ['success' => false, 'message' => 'No se puede eliminar: El laboratorio ya tiene resultados.'];
         }
 
-        if ($item->itemable_type != LabExam::class && $item->specialityResult && !empty($item->specialityResult->content)) {
-            $filled = array_filter($item->specialityResult->content);
+        if ($item->itemable_type != LabExam::class && $item->specialityResult) {
+            $content = $this->normalizeSpecialityContent($item->specialityResult->content);
+            $filled = array_filter($content, fn ($value) => $this->hasMeaningfulSpecialityValue($value));
             if (count($filled) > 0) {
                 return ['success' => false, 'message' => 'No se puede eliminar: La ficha médica ya tiene datos.'];
             }
@@ -224,5 +225,38 @@ class VoucherController extends Controller
         $item->labResult()->delete();
         $item->specialityResult()->delete();
         $item->delete();
+    }
+
+    private function normalizeSpecialityContent(mixed $content): array
+    {
+        if (is_array($content)) {
+            return $content;
+        }
+
+        if (is_string($content)) {
+            $decoded = json_decode($content, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                return $decoded;
+            }
+
+            return trim($content) !== '' ? [$content] : [];
+        }
+
+        return [];
+    }
+
+    private function hasMeaningfulSpecialityValue(mixed $value): bool
+    {
+        if (is_array($value)) {
+            foreach ($value as $item) {
+                if ($this->hasMeaningfulSpecialityValue($item)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        return !is_null($value) && $value !== '';
     }
 }
