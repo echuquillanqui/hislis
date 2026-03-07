@@ -45,7 +45,6 @@ class AttentionController extends Controller
                 'vouchers' => function($q) use ($fecha) {
                     $q->whereDate('created_at', $fecha);
                 },
-                'vouchers.orderItems.itemable', // Carga polimórfica: Service o LabExam
                 'triages' => function($q) use ($fecha) {
                     $q->whereDate('created_at', $fecha);
                 }
@@ -55,16 +54,29 @@ class AttentionController extends Controller
                 // Aplanamos todos los items de todos los vouchers del día
                 $allItems = $patient->vouchers->flatMap->orderItems;
 
+                // Cargamos relaciones extra según tipo para acceder a plantilla
+                $allItems->loadMorph('itemable', [
+                    Service::class => ['template', 'area.parent.defaultTemplate', 'area.defaultTemplate'],
+                    LabExam::class  => [],
+                ]);
+
                 // Estructuramos las órdenes médicas agrupadas por ID de Área
                 $patient->medical_orders = $allItems->groupBy(function($item) {
                     return $item->itemable->area_id; // Obtenemos el área desde el servicio/examen
                 })->map(function($group) {
                     return $group->map(function($item) {
+                        $template = null;
+
+                        if ($item->itemable instanceof Service) {
+                            $template = $item->itemable->getActiveTemplate();
+                        }
                         return [
                             'order_item_id' => $item->id,
                             'service_name'  => $item->itemable->name,
                             'status'        => $item->status,
-                            'type'          => class_basename($item->itemable_type) // Service o LabExam
+                            'type'          => class_basename($item->itemable_type), // Service o LabExam
+                            'template_name' => $template?->name,
+                            'template_schema' => $template?->schema ?? []
                         ];
                     });
                 });

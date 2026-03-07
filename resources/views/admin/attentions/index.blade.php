@@ -82,7 +82,8 @@
                                             :class="getBtnStyle(p, '{{ $area->slug }}')"
                                             @click="openAttention(p, {{ $area->id }}, '{{ $area->name }}', '{{ $area->slug }}')">
                                         
-                                        <i class="fa-solid" :class="'{{ $area->slug }}' === 'triaje' ? 'fa-stethoscope' : 'fa-hand-holding-medical'"></i>
+                                        <i class="fa-solid d-block mb-1" :class="'{{ $area->slug }}' === 'triaje' ? 'fa-stethoscope' : 'fa-hand-holding-medical'"></i>
+                                        <span class="small fw-bold">ATENDER</span>
                                         
                                         <template x-if="!p.is_triaged && '{{ $area->slug }}' !== 'triaje'">
                                             <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle shadow-sm"></span>
@@ -140,10 +141,36 @@
                                 </h5>
                                 
                                 <div class="row g-3">
-                                    <div class="col-12">
-                                        <label class="small fw-bold mb-1">HALLAZGOS MÉDICOS / INFORME</label>
-                                        <textarea class="form-control border-dark rounded-0 shadow-sm" rows="12" placeholder="Escriba los resultados..."></textarea>
-                                    </div>
+                                    <template x-if="exam.template_schema && exam.template_schema.length">
+                                        <template x-for="(field, fieldIndex) in exam.template_schema" :key="fieldIndex">
+                                            <div :class="`col-md-${field.column || 12}`">
+                                                <label class="small fw-bold mb-1 text-uppercase" x-text="field.label"></label>
+
+                                                <template x-if="field.type === 'textarea'">
+                                                    <textarea class="form-control border-dark rounded-0 shadow-sm" rows="6" placeholder="Completar campo..."></textarea>
+                                                </template>
+
+                                                <template x-if="field.type === 'number'">
+                                                    <input type="number" class="form-control border-dark rounded-0 shadow-sm" placeholder="Ingrese valor">
+                                                </template>
+
+                                                <template x-if="field.type === 'date'">
+                                                    <input type="date" class="form-control border-dark rounded-0 shadow-sm">
+                                                </template>
+
+                                                <template x-if="field.type !== 'textarea' && field.type !== 'number' && field.type !== 'date'">
+                                                    <input type="text" class="form-control border-dark rounded-0 shadow-sm" placeholder="Completar campo...">
+                                                </template>
+                                            </div>
+                                        </template>
+                                    </template>
+
+                                    <template x-if="!exam.template_schema || !exam.template_schema.length">
+                                        <div class="col-12">
+                                            <label class="small fw-bold mb-1">HALLAZGOS MÉDICOS / INFORME</label>
+                                            <textarea class="form-control border-dark rounded-0 shadow-sm" rows="12" placeholder="Escriba los resultados..."></textarea>
+                                        </div>
+                                    </template>
                                 </div>
 
                                 <div class="text-end mt-4">
@@ -226,7 +253,7 @@ function attentionMonitor() {
             this.currentAreaSlug = areaSlug;
             
             if(areaSlug === 'triaje') {
-                this.activeExams = [{ service_name: 'SIGNOS VITALES', service_slug: 'triage' }];
+                this.activeExams = [{ service_name: 'SIGNOS VITALES', service_slug: 'triage', template_schema: [] }];
             } else {
                 // Filtramos las órdenes que corresponden solo a esta área
                 this.activeExams = patient.medical_orders[areaId] || [];
