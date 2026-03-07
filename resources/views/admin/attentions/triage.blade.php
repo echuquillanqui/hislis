@@ -24,17 +24,17 @@
 
                 <div class="flex flex-col">
                     <label class="text-sm font-semibold text-gray-600 mb-1">Temperatura (°C)</label>
-                    <input type="number" name="temp" step="0.1" class="border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" required>
+                    <input type="number" name="temp" step="0.1" value="{{ old('temp', $triage->temp) }}" class="border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" required>
                 </div>
 
                 <div class="flex flex-col">
                     <label class="text-sm font-semibold text-gray-600 mb-1">Presión Arterial (PA)</label>
-                    <input type="text" name="bp" placeholder="120/80" class="border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" required>
+                    <input type="text" name="bp" placeholder="120/80" value="{{ old('bp', $triage->bp) }}" class="border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" required>
                 </div>
 
                 <div class="flex flex-col">
                     <label class="text-sm font-semibold text-gray-600 mb-1">Frec. Cardíaca (LPM)</label>
-                    <input type="number" name="hr" class="border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" required>
+                    <input type="number" name="hr" value="{{ old('hr', $triage->hr) }}" class="border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" required>
                 </div>
 
                 <div class="flex flex-col">
@@ -48,18 +48,28 @@
 
                 <div class="flex flex-col">
                     <label class="text-sm font-semibold text-gray-600 mb-1">Peso (Kg)</label>
-                    <input type="number" id="weight" name="weight" step="0.01" class="border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" required>
+                    <input type="number" id="weight" name="weight" step="0.01" value="{{ old('weight', $triage->weight) }}" class="border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" required>
                 </div>
 
                 <div class="flex flex-col">
                     <label class="text-sm font-semibold text-gray-600 mb-1">Talla (Metros)</label>
-                    <input type="number" id="height" name="height" step="0.01" placeholder="Ej: 1.75" class="border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" required>
+                    <input type="number" id="height" name="height" step="0.01" value="{{ old('height', $triage->height) }}" placeholder="Ej: 1.75" class="border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" required>
+                </div>
+
+                <div class="flex flex-col">
+                    <label class="text-sm font-semibold text-gray-600 mb-1">Saturación O₂ (%)</label>
+                    <input type="number" name="spo2" value="{{ old('spo2', $triage->spo2) }}" class="border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                </div>
+
+                <div class="col-span-full flex flex-col">
+                    <label class="text-sm font-semibold text-gray-600 mb-1">Observaciones</label>
+                    <textarea name="notes" rows="3" class="border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">{{ old('notes', $triage->notes) }}</textarea>
                 </div>
 
                 <div class="col-span-2 bg-blue-50 p-4 rounded-lg flex items-center justify-around border border-blue-200">
                     <div class="text-center">
                         <span class="block text-xs font-bold text-blue-600 uppercase">IMC (BMI)</span>
-                        <span id="bmi_val" class="text-2xl font-black text-blue-800">0.00</span>
+                        <<span id="bmi_val" class="text-2xl font-black text-blue-800">{{ number_format((float) ($triage->bmi ?? 0), 2) }}</span>
                     </div>
                     <div id="bmi_tag" class="px-3 py-1 rounded text-xs font-bold bg-gray-200 text-gray-600">
                         SIN DATOS
@@ -105,5 +115,6 @@
 
     w.addEventListener('input', calc);
     h.addEventListener('input', calc);
+    calc();
 </script>
 @endsection
