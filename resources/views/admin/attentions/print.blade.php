@@ -42,7 +42,7 @@
         .triage-notes { border-top: 1px solid #e5e7eb; padding: 8px 10px; }
 
         .content { border: 1px solid #9ca3af; margin-bottom: 14px; }
-        .content .row { border-bottom: 1px solid #e5e7eb; padding: 8px 10px; }
+        .content .row { border-bottom: 1px solid #e5e7eb; padding: 2px 4px; }
         .content .row:last-child { border-bottom: 0; }
         .label { font-weight: 700; text-transform: uppercase; font-size: 11px; color: #4b5563; }
         .value { white-space: pre-wrap; margin-top: 3px; }
@@ -57,7 +57,7 @@
             min-height: 150px;
         }
         .stamp-muted { color: #6b7280; font-size: 11px; font-weight: 700; text-transform: uppercase; }
-        .signature-space { height: 56px; margin: 10px 0 12px; border-bottom: 1px solid #111827; }
+        .signature-space { height: 56px; margin: 50px 0 10px; border-bottom: 1px solid #111827; }
         .stamp-line { font-weight: 700; text-transform: uppercase; margin: 2px 0; font-size: 11px; }
 
         .company-data {
@@ -187,7 +187,6 @@
                     <div class="value">{{ $triage?->notes ?: 'Sin observaciones registradas.' }}</div>
                 </div>
             </div>
-        </div>
 
             <div class="content">
             @forelse($content as $key => $value)
@@ -205,7 +204,7 @@
 
     <div class="footer-signature">
             <div class="stamp-box">
-                <div class="stamp-muted">Sello y firma</div>
+                <div class="stamp-muted"></div>
                 <div class="signature-space"></div>
                 <div class="stamp-line">DR. {{ strtoupper($doctor->name ?? 'USUARIO') }}</div>
                 <div class="stamp-line">{{ strtoupper($professionalRole) }}</div>
