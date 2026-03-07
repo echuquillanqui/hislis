@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\{Voucher, OrderItem, LabExam, Service, Patient, LabResult, SpecialityResult};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class VoucherController extends Controller
 {
@@ -115,28 +116,113 @@ class VoucherController extends Controller
     {
         // Cargamos relaciones para validar en la vista
         $voucher->load(['patient', 'orderItems.itemable', 'orderItems.labResult', 'orderItems.specialityResult']);
-        return view('admin.vouchers.edit', compact('voucher'));
+        $exams = LabExam::all()->map(fn($i) => ['id'=>$i->id, 'name'=>$i->name, 'price'=>(float)$i->price, 'type'=>'lab', 'cat'=>'LAB']);
+        $services = Service::all()->map(fn($i) => ['id'=>$i->id, 'name'=>$i->name, 'price'=>(float)$i->price, 'type'=>'service', 'cat'=>'CONSULTA']);
+        $allItems = $exams->concat($services)->values();
+
+        return view('admin.vouchers.edit', compact('voucher', 'allItems'));
+    }
+
+    public function update(Request $request, Voucher $voucher)
+    {
+         $data = $request->validate([
+            'items' => 'required|array|min:1',
+            'items.*.id' => 'required|integer',
+            'items.*.type' => 'required|in:lab,service',
+            'items.*.price' => 'required|numeric|min:0',
+            'items.*.order_item_id' => 'nullable|integer',
+            'total' => 'required|numeric|min:0',
+        ]);
+
+        DB::transaction(function () use ($data, $voucher) {
+            $voucher->load(['orderItems.labResult', 'orderItems.specialityResult']);
+
+            $submittedIds = collect($data['items'])
+                ->pluck('order_item_id')
+                ->filter()
+                ->map(fn($id) => (int) $id)
+                ->all();
+
+            $itemsToDelete = $voucher->orderItems->whereNotIn('id', $submittedIds);
+
+            foreach ($itemsToDelete as $orderItem) {
+                $deleteValidation = $this->validateDeleteOrderItem($orderItem);
+                if (!$deleteValidation['success']) {
+                    throw ValidationException::withMessages(['items' => $deleteValidation['message']]);
+                }
+                $this->deleteOrderItemWithRelations($orderItem);
+            }
+            foreach ($data['items'] as $item) {
+                if (!empty($item['order_item_id'])) {
+                    continue;
+                }
+
+                $orderItem = OrderItem::create([
+                    'voucher_id'    => $voucher->id,
+                    'itemable_id'   => $item['id'],
+                    'itemable_type' => $item['type'] == 'lab' ? LabExam::class : Service::class,
+                    'price'         => $item['price'],
+                    'status'        => 'pending'
+                ]);
+
+                if ($item['type'] == 'lab') {
+                    LabResult::create(['order_item_id' => $orderItem->id, 'lab_exam_id' => $item['id']]);
+                    continue;
+                }
+
+                $template = Service::findOrFail($item['id'])->getActiveTemplate();
+                SpecialityResult::create([
+                    'order_item_id' => $orderItem->id,
+                    'user_id'       => auth()->id(),
+                    'content'       => $template ? $template->schema : [],
+                    'status'        => 'pending'
+                ]);
+            }
+            $voucher->update(['total' => $data['total']]);
+        });
+
+        return redirect()->route('vouchers.edit', $voucher)->with('success', 'Orden actualizada correctamente.');
     }
 
     public function destroyItem(OrderItem $item)
     {
         $item->load(['labResult', 'specialityResult']);
 
-        // VALIDACIÓN ANTES DE ELIMINAR
-        if ($item->itemable_type == LabExam::class) {
-            if ($item->labResult && !is_null($item->labResult->result_value)) {
-                return response()->json(['success' => false, 'message' => 'No se puede eliminar: El laboratorio ya tiene resultados.'], 422);
-            }
-        } else {
-            if ($item->specialityResult && !empty($item->specialityResult->content)) {
-                $filled = array_filter($item->specialityResult->content);
-                if (count($filled) > 0) {
-                    return response()->json(['success' => false, 'message' => 'No se puede eliminar: La ficha médica ya tiene datos.'], 422);
-                }
+        $deleteValidation = $this->validateDeleteOrderItem($item);
+        if (!$deleteValidation['success']) {
+            return response()->json($deleteValidation, 422);
+        }
+
+        $this->deleteOrderItemWithRelations($item);
+
+        $voucher = $item->voucher()->with('orderItems')->first();
+        if ($voucher) {
+            $voucher->update(['total' => (float) $voucher->orderItems->sum('price')]);
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    private function validateDeleteOrderItem(OrderItem $item): array
+    {
+        if ($item->itemable_type == LabExam::class && $item->labResult && !is_null($item->labResult->result_value)) {
+            return ['success' => false, 'message' => 'No se puede eliminar: El laboratorio ya tiene resultados.'];
+        }
+
+        if ($item->itemable_type != LabExam::class && $item->specialityResult && !empty($item->specialityResult->content)) {
+            $filled = array_filter($item->specialityResult->content);
+            if (count($filled) > 0) {
+                return ['success' => false, 'message' => 'No se puede eliminar: La ficha médica ya tiene datos.'];
             }
         }
 
+        return ['success' => true];
+    }
+
+    private function deleteOrderItemWithRelations(OrderItem $item): void
+    {
+        $item->labResult()->delete();
+        $item->specialityResult()->delete();
         $item->delete();
-        return response()->json(['success' => true]);
     }
 }
