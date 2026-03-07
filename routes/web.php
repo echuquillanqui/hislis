@@ -54,14 +54,12 @@ Route::group(['middleware' => ['auth']], function () {
         Route::resource('services', ServiceController::class);
         Route::resource('bundles', BundleController::class)->names('bundles');
 
-         Route::get('vouchers/{voucher}/print', [VoucherController::class, 'printTicket'])
-        ->name('vouchers.print');
-
-        Route::delete('/vouchers/item/{item}', [VoucherController::class, 'destroyItem'])->name('vouchers.destroy-item');
+        Route::get('vouchers/search-patients', [VoucherController::class, 'searchPatients'])->name('vouchers.search-patients');
+        Route::delete('vouchers/item/{item}', [VoucherController::class, 'destroyItem'])->name('vouchers.destroy-item');
+        Route::get('vouchers/{voucher}/print', [VoucherController::class, 'printTicket'])->name('vouchers.print');
 
         Route::resource('vouchers', VoucherController::class);
-        Route::get('admin/vouchers/search-patients', [VoucherController::class, 'searchPatients']);
-        Route::delete('admin/vouchers/item/{id}', [VoucherController::class, 'destroyItem']);
+
 
     });
         

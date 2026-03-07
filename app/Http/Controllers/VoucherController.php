@@ -32,32 +32,47 @@ class VoucherController extends Controller
     // BUSQUEDA DE PACIENTES - Asegúrate que la ruta en web.php sea /admin/vouchers/search-patients
     public function searchPatients(Request $request)
     {
-        $q = $request->get('q');
-        $patients = Patient::where('dni', 'LIKE', "%$q%")
-            ->orWhere('last_name', 'LIKE', "%$q%")
-            ->orWhere('first_name', 'LIKE', "%$q%")
-            ->limit(10)->get();
+        $q = trim((string) $request->get('q', ''));
+
+        if ($q === '' || strlen($q) < 2) {
+            return response()->json([]);
+        }
+
+        $patients = Patient::query()
+            ->where('dni', 'LIKE', "%{$q}%")
+            ->orWhere('last_name', 'LIKE', "%{$q}%")
+            ->orWhere('first_name', 'LIKE', "%{$q}%")
+            ->limit(10)
+            ->get(['id', 'dni', 'first_name', 'last_name']);
 
         return response()->json($patients);
     }
 
     public function store(Request $request)
     {
-        $request->validate(['patient_id' => 'required', 'items' => 'required|array', 'total' => 'required']);
+        $data = $request->validate([
+            'patient_id' => 'required|exists:patients,id',
+            'type' => 'required|in:01,03',
+            'items' => 'required|array|min:1',
+            'items.*.id' => 'required|integer',
+            'items.*.type' => 'required|in:lab,service',
+            'items.*.price' => 'required|numeric|min:0',
+            'total' => 'required|numeric|min:0',
+        ]);
 
-        return DB::transaction(function () use ($request) {
-            $lastNum = Voucher::where('type', $request->type)->max('number') ?? 0;
+        return DB::transaction(function () use ($data) {
+            $lastNum = Voucher::where('type', $data['type'])->max('number') ?? 0;
             $voucher = Voucher::create([
-                'patient_id' => $request->patient_id,
+                'patient_id' => $data['patient_id'],
                 'user_id'    => auth()->id(),
-                'type'       => $request->type,
-                'series'     => $request->type == '01' ? 'F001' : 'B001',
+                'type'       => $data['type'],
+                'series'     => $data['type'] === '01' ? 'F001' : 'B001',
                 'number'     => str_pad((int)$lastNum + 1, 8, '0', STR_PAD_LEFT),
-                'total'      => $request->total,
+                'total'      => $data['total'],
                 'status'     => 'paid'
             ]);
 
-            foreach ($request->items as $item) {
+            foreach ($data['items'] as $item) {
                 $oi = OrderItem::create([
                     'voucher_id'    => $voucher->id,
                     'itemable_id'   => $item['id'],
@@ -67,9 +82,9 @@ class VoucherController extends Controller
                 ]);
 
                 if ($item['type'] == 'lab') {
-                    LabResult::create(['order_item_id' => $oi->id, 'lab_exam_id' => $item['id'], 'status' => 'pending']);
+                    LabResult::create(['order_item_id' => $oi->id, 'lab_exam_id' => $item['id']]);
                 } else {
-                    $template = Service::find($item['id'])->getActiveTemplate();
+                    $template = Service::findOrFail($item['id'])->getActiveTemplate();
                     SpecialityResult::create([
                         'order_item_id' => $oi->id,
                         'user_id'       => auth()->id(),
@@ -82,6 +97,20 @@ class VoucherController extends Controller
         });
     }
 
+    public function show(Voucher $voucher)
+    {
+        $voucher->load(['patient', 'orderItems.itemable']);
+
+        return view('admin.vouchers.ticket', compact('voucher'));
+    }
+
+    public function printTicket(Voucher $voucher)
+    {
+        $voucher->load(['patient', 'orderItems.itemable']);
+
+        return view('admin.vouchers.ticket', compact('voucher'));
+    }
+
     public function edit(Voucher $voucher)
     {
         // Cargamos relaciones para validar en la vista
@@ -89,9 +118,9 @@ class VoucherController extends Controller
         return view('admin.vouchers.edit', compact('voucher'));
     }
 
-    public function destroyItem($id)
+    public function destroyItem(OrderItem $item)
     {
-        $item = OrderItem::with(['labResult', 'specialityResult'])->findOrFail($id);
+        $item->load(['labResult', 'specialityResult']);
 
         // VALIDACIÓN ANTES DE ELIMINAR
         if ($item->itemable_type == LabExam::class) {
