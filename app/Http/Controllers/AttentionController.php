@@ -8,6 +8,7 @@ use App\Models\Voucher;
 use App\Models\OrderItem;
 use App\Models\Service;
 use App\Models\LabExam;
+use App\Models\SpecialityResult;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -65,7 +66,7 @@ class AttentionController extends Controller
                 'vouchers' => function ($q) use ($fecha) {
                     $q->whereDate('created_at', $fecha)
                       ->where('status', 'paid')
-                      ->with('orderItems.itemable.area.parent');
+                      ->with('orderItems.itemable.area.parent', 'orderItems.specialityResult');
                 },
                 'triages' => function ($q) use ($fecha) {
                     $q->whereDate('created_at', $fecha)->latest();
@@ -98,6 +99,11 @@ class AttentionController extends Controller
                                 'type' => class_basename($item->itemable_type),
                                 'template_name' => $template?->name,
                                 'template_schema' => $template?->schema ?? [],
+                                'speciality_result' => [
+                                    'content' => $item->specialityResult?->content ?? [],
+                                    'status' => $item->specialityResult?->status,
+                                    'pdf_path' => $item->specialityResult?->pdf_path,
+                                ],
                             ];
                         })->values();
                     });
@@ -137,18 +143,25 @@ class AttentionController extends Controller
         try {
             $item = OrderItem::findOrFail($request->order_item_id);
 
+            $payload = $request->template_data ?? [];
+
             $payloadText = $request->filled('observations')
                 ? $request->observations
-                : json_encode($request->template_data ?? [], JSON_UNESCAPED_UNICODE);
+                : json_encode($payload, JSON_UNESCAPED_UNICODE);
 
             if ($item->itemable_type === Service::class) {
-                $item->specialityResult()->updateOrCreate(
+                $result = $item->specialityResult()->updateOrCreate(
                         ['order_item_id' => $item->id],
                         [
-                            'result_text' => $payloadText,
+                            'content' => $payload,
                             'user_id' => auth()->id(),
+                            'status' => 'finalized',
                         ]
                     );
+
+                    $result->update([
+                    'pdf_path' => route('attentions.print', $item),
+                ]);
                 } elseif ($item->itemable_type === LabExam::class) {
                 $item->labResult()->updateOrCreate(
                     ['order_item_id' => $item->id],
@@ -166,5 +179,22 @@ class AttentionController extends Controller
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
+    }
+
+
+    public function print(OrderItem $item)
+    {
+        abort_unless($item->itemable_type === Service::class, 404);
+
+        $result = $item->specialityResult;
+        abort_unless($result instanceof SpecialityResult, 404);
+
+        $content = is_array($result->content) ? $result->content : [];
+
+        return view('admin.attentions.print', [
+            'item' => $item->load(['voucher.patient', 'itemable']),
+            'result' => $result,
+            'content' => $content,
+        ]);
     }
 }

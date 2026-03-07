@@ -190,6 +190,18 @@
                                 <h5 class="fw-bold border-bottom pb-2 mb-3 text-dark">
                                     REGISTRO DE: <span class="text-primary" x-text="exam.service_name"></span>
                                 </h5>
+
+                                 <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="badge"
+                                          :class="(exam.speciality_result?.status || 'pending') === 'finalized' ? 'bg-success' : 'bg-secondary'"
+                                          x-text="(exam.speciality_result?.status || 'pending') === 'finalized' ? 'FINALIZADO' : 'PENDIENTE'"></span>
+
+                                    <template x-if="exam.speciality_result?.pdf_path">
+                                        <a :href="exam.speciality_result.pdf_path" target="_blank" class="btn btn-sm btn-outline-dark rounded-0 fw-bold">
+                                            <i class="fa-solid fa-print me-1"></i> Imprimir formato
+                                        </a>
+                                    </template>
+                                </div>
                                 
                                 <div class="row g-3">
                                     <template x-if="exam.template_schema && exam.template_schema.length">
@@ -319,6 +331,7 @@ const registerAttentionMonitor = () => {
                 // Filtramos las órdenes que corresponden solo a esta área
                 this.activeExams = patient.medical_orders[areaId] || [];
                 this.activeTab = 0;
+                this.hydrateFormResults(this.activeExams);
             }
 
             new bootstrap.Modal(document.getElementById('modalAttention')).show();
@@ -351,6 +364,15 @@ const registerAttentionMonitor = () => {
             this.formResults[orderItemId][key] = value;
         },
 
+        hydrateFormResults(exams) {
+            exams.forEach((exam) => {
+                const current = exam.speciality_result?.content;
+                if (current && typeof current === 'object' && !Array.isArray(current)) {
+                    this.formResults[exam.order_item_id] = { ...current };
+                }
+            });
+        },
+
         async saveExam(exam) {
             this.saving = true;
             try {
@@ -373,6 +395,13 @@ const registerAttentionMonitor = () => {
                 }
 
                 toastr.success(data.message || 'Resultado guardado.');
+                exam.status = 'completed';
+                exam.speciality_result = {
+                    ...(exam.speciality_result || {}),
+                    content: this.formResults[exam.order_item_id] || {},
+                    status: 'finalized',
+                    pdf_path: `{{ url('admin/monitor') }}/${exam.order_item_id}/print`
+                };
                 this.getAtenciones();
             } catch (error) {
                 toastr.error(error.message);
