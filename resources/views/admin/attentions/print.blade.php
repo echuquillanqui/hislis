@@ -7,7 +7,9 @@
         @page { size: A4; margin: 2mm; }
         body { font-family: Arial, sans-serif; margin: 14px; color: #1f2937; font-size: 12px; }
         .page { min-height: 96vh; display: flex; flex-direction: column; }
-        .header { text-align: center; border-bottom: 2px solid #111827; padding-bottom: 8px; margin-bottom: 12px; }
+        .header { border-bottom: 2px solid #111827; padding-bottom: 8px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+        .header-logo { width: 80px; height: 80px; object-fit: contain; flex-shrink: 0; }
+        .header-content { text-align: center; flex: 1; }
         .header h2 { margin: 0; font-size: 20px; letter-spacing: 1px; }
         .header p { margin: 4px 0 0 0; font-size: 11px; }
 
@@ -39,15 +41,15 @@
         .triage-value { margin-top: 4px; font-weight: 700; line-height: 1.35; word-break: break-word; }
         .triage-notes { border-top: 1px solid #e5e7eb; padding: 8px 10px; }
 
-        .content { border: 1px solid #9ca3af; }
+        .content { border: 1px solid #9ca3af; margin-bottom: 14px; }
         .content .row { border-bottom: 1px solid #e5e7eb; padding: 8px 10px; }
         .content .row:last-child { border-bottom: 0; }
         .label { font-weight: 700; text-transform: uppercase; font-size: 11px; color: #4b5563; }
         .value { white-space: pre-wrap; margin-top: 3px; }
 
-        .footer-signature { margin-top: auto; padding-top: 14px; display: flex; justify-content: flex-end; }
+        .footer-signature { margin-top: auto; padding-top: 14px; display: flex; justify-content: center; }
         .stamp-box {
-            width: 310px;
+            width: 340px;
             border: 2px dashed #6b7280;
             border-radius: 8px;
             padding: 16px;
@@ -57,6 +59,16 @@
         .stamp-muted { color: #6b7280; font-size: 11px; font-weight: 700; text-transform: uppercase; }
         .signature-space { height: 56px; margin: 10px 0 12px; border-bottom: 1px solid #111827; }
         .stamp-line { font-weight: 700; text-transform: uppercase; margin: 2px 0; font-size: 11px; }
+
+        .company-data {
+            border-top: 1px solid #d1d5db;
+            margin-top: 10px;
+            padding-top: 8px;
+            text-align: center;
+            font-size: 10px;
+            color: #374151;
+            line-height: 1.35;
+        }
 
         .single-page-print {
             min-height: calc(297mm - 20mm);
@@ -85,6 +97,12 @@
 
         $age = \Carbon\Carbon::parse($patient->birth_date)->age;
 
+        $hospitalName = $setting?->hospital_name ?: 'CLÍNICA HISLIS';
+        $companyDocument = $setting?->ruc_nit ?: 'SIN RUC/NIT';
+        $companyAddress = $setting?->address ?: 'Dirección no registrada';
+        $companyPhone = $setting?->phone ?: 'Teléfono no registrado';
+        $logoPath = $setting?->logo_path ? public_path('storage/' . $setting->logo_path) : null;
+
         $professionalRole = 'Profesional de Salud';
         if ($doctor?->hasRole('MEDICO')) {
             $professionalRole = 'Médico';
@@ -95,8 +113,13 @@
     <div class="page single-page-print">
         <div>
             <div class="header">
-                <h2>CLÍNICA HISLIS</h2>
-                <p>INFORME DE ATENCIÓN</p>
+                @if($logoPath && file_exists($logoPath))
+                    <img src="{{ $logoPath }}" alt="Logo" class="header-logo">
+                @endif
+                <div class="header-content">
+                    <h2>{{ strtoupper($hospitalName) }}</h2>
+                    <p>INFORME DE ATENCIÓN</p>
+                </div>
             </div>
 
              <div class="patient-data">
@@ -167,17 +190,17 @@
         </div>
 
             <div class="content">
-                @forelse($content as $key => $value)
-                    <div class="row">
-                        <div class="label">{{ str_replace('_', ' ', $key) }}</div>
-                        <div class="value">{{ is_array($value) ? json_encode($value, JSON_UNESCAPED_UNICODE) : $value }}</div>
-                    </div>
-                @empty
-                    <div class="row">
-                        <p>No hay contenido registrado.</p>
-                    </div>
-                @endforelse
-            </div>
+            @forelse($content as $key => $value)
+                <div class="row">
+                    <div class="label">{{ str_replace('_', ' ', $key) }}</div>
+                    <div class="value">{{ is_array($value) ? json_encode($value, JSON_UNESCAPED_UNICODE) : $value }}</div>
+                </div>
+            @empty
+                <div class="row">
+                    <p>No hay contenido registrado.</p>
+                </div>
+            @endforelse
+        </div>
     </div>
 
     <div class="footer-signature">

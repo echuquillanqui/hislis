@@ -9,6 +9,7 @@ use App\Models\OrderItem;
 use App\Models\Service;
 use App\Models\LabExam;
 use App\Models\SpecialityResult;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -221,6 +222,7 @@ class AttentionController extends Controller
             'content' => $content,
             'doctor' => $result->doctor()->with('roles')->first(),
             'triage' => $triage,
+            'setting' => Setting::first(),
         ]);
     }
 }
