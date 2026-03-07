@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid" x-data="attentionMonitor()">
+<div class="container-fluid" x-data="attentionMonitor">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h4 class="fw-bold text-dark mb-0">
@@ -257,8 +257,8 @@
 </style>
 
 <script>
-window.attentionMonitor = function () {
-    return {
+document.addEventListener('alpine:init', () => {
+    Alpine.data('attentionMonitor', () => ({
         patients: [],
         filters: {
             search: '', 
@@ -411,8 +411,8 @@ window.attentionMonitor = function () {
             } finally {
                 this.saving = false;
             }
-        }
-    }
-}
+        }  
+    }));
+});
 </script>
 @endsection
