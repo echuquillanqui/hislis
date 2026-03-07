@@ -18,11 +18,13 @@ class AttentionController extends Controller
      */
     public function index(Request $request)
     {
+        $statusFilter = $request->status === 'all' ? 'all' : 'pending';
         // 1. Obtener áreas médicas activas para las columnas del monitor
-        $areas = Area::where('status', 1)
+        $areas = Area::where('areas.status', 1)
             ->where(function ($q) {
-                $q->where('is_medical', 1)
-                  ->orWhereHas('labExams', fn ($labQ) => $labQ->where('status', 1));
+                $q->where('areas.is_medical', 1)
+                  ->orWhere('areas.slug', 'triaje')
+                  ->orWhereHas('labExams', fn ($labQ) => $labQ->where('lab_exams.status', 1));
             })
             ->get();
 
@@ -32,7 +34,8 @@ class AttentionController extends Controller
 
             // Consulta base: Pacientes que tienen Vouchers (ventas) en la fecha seleccionada
             $query = Patient::whereHas('vouchers', function($q) use ($fecha) {
-                $q->whereDate('created_at', $fecha);
+                $q->whereDate('created_at', $fecha)
+                  ->where('status', 'paid');
             });
 
             // Filtro dinámico por nombre, apellido o DNI
@@ -46,17 +49,24 @@ class AttentionController extends Controller
 
             $patients = $query->with([
                 'vouchers' => function($q) use ($fecha) {
-                    $q->whereDate('created_at', $fecha);
+                    $q->whereDate('created_at', $fecha)
+                      ->where('status', 'paid');
                 },
                 'triages' => function($q) use ($fecha) {
                     $q->whereDate('created_at', $fecha);
                 }
             ])
             ->get()
-            ->map(function($patient) {
+            ->map(function($patient) use ($statusFilter) {
                 // Aplanamos todos los items de todos los vouchers del día
                 $allItems = $patient->vouchers->flatMap->orderItems
-                    ->filter(fn ($item) => $item->itemable);
+                    ->filter(function ($item) use ($statusFilter) {
+                        if (!$item->itemable) {
+                            return false;
+                        }
+
+                        return $statusFilter === 'all' || $item->status !== 'completed';
+                    });
 
                 // Estructuramos las órdenes médicas agrupadas por ID de Área
                 $patient->medical_orders = $allItems->groupBy(function($item) {
