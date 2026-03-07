@@ -26,6 +26,7 @@ class AttentionController extends Controller
         // 2. Manejo de petición AJAX para reactividad del buscador y filtros
         if ($request->ajax()) {
             $fecha = $request->date ?? Carbon::now()->format('Y-m-d');
+            $status = $request->status ?? 'pending';
 
             // Consulta base: Pacientes que tienen Vouchers (ventas) en la fecha seleccionada
             $query = Patient::whereHas('vouchers', function($q) use ($fecha) {
@@ -50,9 +51,11 @@ class AttentionController extends Controller
                 }
             ])
             ->get()
-            ->map(function($patient) {
+            ->map(function($patient) use ($status) {
                 // Aplanamos todos los items de todos los vouchers del día
-                $allItems = $patient->vouchers->flatMap->orderItems;
+                $allItems = $patient->vouchers->flatMap->orderItems
+                    ->filter(fn ($item) => $item->itemable)
+                    ->when($status === 'pending', fn ($items) => $items->where('status', 'pending'));
 
                 // Cargamos relaciones extra según tipo para acceder a plantilla
                 $allItems->loadMorph('itemable', [
@@ -84,11 +87,19 @@ class AttentionController extends Controller
                 // IDs de áreas pagadas para habilitar botones en la vista
                 $patient->paid_area_ids = $patient->medical_orders->keys()->toArray();
 
+                // Resumen rápido por área para el monitor
+                $patient->area_order_counts = $patient->medical_orders
+                    ->map(fn ($orders) => $orders->count());
+
+                $patient->voucher_count = $patient->vouchers->count();
+
                 // Verificación de Triaje (Signos Vitales)
                 $patient->is_triaged = $patient->triages->isNotEmpty();
 
                 return $patient;
-            });
+             })
+            ->filter(fn ($patient) => $patient->medical_orders->isNotEmpty() || $patient->is_triaged)
+            ->values();
 
             return response()->json([
                 'patients' => $patients
