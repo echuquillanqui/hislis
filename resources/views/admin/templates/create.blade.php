@@ -32,18 +32,26 @@
                                 <div class="card mb-3 border-light bg-light">
                                     <div class="card-body py-2 px-3">
                                         <div class="row g-2 align-items-end">
-                                            <div class="col-md-6">
+                                            <div class="col-md-5">
                                                 <label class="small fw-bold text-muted">Etiqueta del Campo (Label)</label>
                                                 <input type="text" :name="`fields[${index}][label]`" x-model="field.label" 
                                                        class="form-control form-control-sm" placeholder="Ej: Motivo de consulta" required>
                                             </div>
-                                            <div class="col-md-4">
+                                            <div class="col-md-3">
                                                 <label class="small fw-bold text-muted">Tipo de Entrada</label>
                                                 <select :name="`fields[${index}][type]`" x-model="field.type" class="form-select form-select-sm">
                                                     <option value="text">Texto Corto</option>
                                                     <option value="textarea">Texto Largo (Párrafo)</option>
                                                     <option value="number">Numérico</option>
                                                     <option value="date">Fecha</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label class="small fw-bold text-muted">Columnas</label>
+                                                <select :name="`fields[${index}][column]`" x-model.number="field.column" class="form-select form-select-sm">
+                                                    <template x-for="col in 12" :key="col">
+                                                        <option :value="col" x-text="col"></option>
+                                                    </template>
                                                 </select>
                                             </div>
                                             <div class="col-md-2 text-end">
@@ -77,10 +85,10 @@
 function templateManager() {
     return {
         fields: [
-            { label: '', type: 'text' } // Un campo por defecto
+            { label: '', type: 'text', column: 12 } // Un campo por defecto
         ],
         addField() {
-            this.fields.push({ label: '', type: 'text' });
+            this.fields.push({ label: '', type: 'text', column: 12 });
         },
         removeField(index) {
             this.fields.splice(index, 1);

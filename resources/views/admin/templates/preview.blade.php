@@ -25,21 +25,30 @@
                         <h5 class="text-center fw-bold mb-4 text-uppercase border-bottom pb-2">Registro de Consulta</h5>
                         
                         @forelse($schema as $campo)
-                            <div class="mb-4">
-                                <div class="bg-light border border-bottom-0 rounded-top px-3 py-2">
-                                    <label class="form-label fw-bold small text-primary mb-0 uppercase">
-                                        {{ $campo['label'] }}
-                                    </label>
+                            @if($loop->first)
+                                <div class="row g-3">
+                            @endif
+                            <div class="col-md-{{ max(1, min(12, (int)($campo['column'] ?? 12))) }}">
+                                <div class="mb-1">
+                                    <div class="bg-light border border-bottom-0 rounded-top px-3 py-2">
+                                        <label class="form-label fw-bold small text-primary mb-0 uppercase d-flex justify-content-between">
+                                            <span>{{ $campo['label'] }}</span>
+                                            <span class="text-muted">{{ (int)($campo['column'] ?? 12) }}/12</span>
+                                        </label>
+                                    </div>
+                                    @if($campo['type'] == 'textarea')
+                                        <textarea class="form-control rounded-0 rounded-bottom" rows="3" placeholder="El médico redactará aquí..."></textarea>
+                                    @elseif($campo['type'] == 'number')
+                                        <input type="number" class="form-control rounded-0 rounded-bottom">
+                                    @elseif($campo['type'] == 'date')
+                                        <input type="date" class="form-control rounded-0 rounded-bottom">
+                                    @else
+                                        <input type="text" class="form-control rounded-0 rounded-bottom" placeholder="Escriba aquí...">
+                                    @endif
                                 </div>
-                                @if($campo['type'] == 'textarea')
-                                    <textarea class="form-control rounded-0 rounded-bottom" rows="3" placeholder="El médico redactará aquí..."></textarea>
-                                @elseif($campo['type'] == 'number')
-                                    <input type="number" class="form-control rounded-0 rounded-bottom">
-                                @elseif($campo['type'] == 'date')
-                                    <input type="date" class="form-control rounded-0 rounded-bottom">
-                                @else
-                                    <input type="text" class="form-control rounded-0 rounded-bottom" placeholder="Escriba aquí...">
-                                @endif
+                                @if($loop->last)
+                                </div>
+                            @endif
                             </div>
                         @empty
                             <div class="text-center py-5">

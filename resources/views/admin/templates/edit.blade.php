@@ -46,7 +46,7 @@
                                                 <i class="fas fa-grip-vertical"></i>
                                             </div>
                                             
-                                            <div class="col">
+                                            <div class="col-md-5">
                                                 <input type="text" :name="`fields[${index}][label]`" x-model="field.label" 
                                                        class="form-control form-control-sm" placeholder="Nombre del campo" required>
                                             </div>
@@ -57,6 +57,13 @@
                                                     <option value="textarea">Texto Largo</option>
                                                     <option value="number">Numérico</option>
                                                     <option value="date">Fecha</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <select :name="`fields[${index}][column]`" x-model.number="field.column" class="form-select form-select-sm">
+                                                    <template x-for="col in 12" :key="col">
+                                                        <option :value="col" x-text="`Columnas: ${col}`"></option>
+                                                    </template>
                                                 </select>
                                             </div>
 
@@ -92,10 +99,13 @@
 function templateEditor() {
     return {
         // Cargamos los datos existentes desde el JSON del backend hacia Alpine
-        fields: @json($template->schema ?? []),
+        fields: (@json($template->schema ?? []) || []).map(field => ({
+            ...field,
+            column: Number(field.column ?? 12)
+        })),
         
         addField() {
-            this.fields.push({ label: '', type: 'text' });
+            this.fields.push({ label: '', type: 'text', column: 12 });
         },
         
         removeField(index) {

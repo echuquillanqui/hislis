@@ -26,12 +26,14 @@ class TemplateController extends Controller
             'fields' => 'required|array|min:1',
             'fields.*.label' => 'required|string',
             'fields.*.type' => 'required|string',
+            'fields.*.column' => 'required|integer|min:1|max:12',
         ]);
 
         $schema = collect($request->fields)->map(function($field) {
             return [
                 'label' => $field['label'],
                 'type' => $field['type'],
+                'column' => (int) ($field['column'] ?? 12),
                 'slug' => str()->slug($field['label'], '_')
             ];
         })->toArray();
@@ -54,12 +56,16 @@ class TemplateController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'fields' => 'required|array|min:1',
+            'fields.*.label' => 'required|string',
+            'fields.*.type' => 'required|string',
+            'fields.*.column' => 'required|integer|min:1|max:12',
         ]);
 
         $schema = collect($request->fields)->map(function($field) {
             return [
                 'label' => $field['label'],
                 'type' => $field['type'],
+                'column' => (int) ($field['column'] ?? 12),
                 'slug' => str()->slug($field['label'], '_')
             ];
         })->toArray();
