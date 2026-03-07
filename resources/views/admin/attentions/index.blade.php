@@ -212,7 +212,7 @@ function attentionMonitor() {
         filters: { 
             search: '', 
             status: 'pending',
-            date: new Date().toISOString().split('T')[0] 
+            date: new Date().toLocaleDateString('en-CA')
         },
         selectedPatient: {},
         currentAreaName: '',

@@ -29,7 +29,6 @@ class AttentionController extends Controller
         // 2. Manejo de petición AJAX para reactividad del buscador y filtros
         if ($request->ajax()) {
             $fecha = $request->date ?? Carbon::now()->format('Y-m-d');
-            $labAreaId = optional($areas->firstWhere('slug', 'laboratorio'))->id;
 
             // Consulta base: Pacientes que tienen Vouchers (ventas) en la fecha seleccionada
             $query = Patient::whereHas('vouchers', function($q) use ($fecha) {
@@ -54,7 +53,7 @@ class AttentionController extends Controller
                 }
             ])
             ->get()
-            ->map(function($patient) use ($labAreaId) {
+            ->map(function($patient) {
                 // Aplanamos todos los items de todos los vouchers del día
                 $allItems = $patient->vouchers->flatMap->orderItems
                     ->filter(fn ($item) => $item->itemable);
