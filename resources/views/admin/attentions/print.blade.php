@@ -7,11 +7,15 @@
         @page { size: A4; margin: 2mm; }
         body { font-family: Arial, sans-serif; margin: 14px; color: #1f2937; font-size: 12px; }
         .page { min-height: 96vh; display: flex; flex-direction: column; }
-        .header { border-bottom: 2px solid #111827; padding-bottom: 8px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; gap: 14px; }
-        .header-logo { width: 80px; height: 80px; object-fit: contain; flex-shrink: 0; }
+        .header { border-bottom: 2px solid #111827; padding-bottom: 8px; margin-bottom: 12px; width: 100%; }
+        .header-table { width: 100%; border-collapse: collapse; }
+        .header-table td { vertical-align: middle; }
+        .header-logo-cell { width: 90px; }
+        .header-logo { width: 80px; height: 80px; object-fit: contain; }
         .header-content { text-align: center; flex: 1; }
         .header h2 { margin: 0; font-size: 20px; letter-spacing: 1px; }
         .header p { margin: 4px 0 0 0; font-size: 11px; }
+        .company-line { margin: 2px 0 0 0; font-size: 10px; }
 
         .patient-data {
             display: grid;
@@ -103,6 +107,14 @@
         $companyPhone = $setting?->phone ?: 'Teléfono no registrado';
         $logoPath = $setting?->logo_path ? public_path('storage/' . $setting->logo_path) : null;
 
+        $logoSrc = null;
+
+        if ($logoPath && file_exists($logoPath)) {
+            $logoMime = mime_content_type($logoPath) ?: 'image/png';
+            $logoBase64 = base64_encode(file_get_contents($logoPath));
+            $logoSrc = 'data:' . $logoMime . ';base64,' . $logoBase64;
+        }
+
         $professionalRole = 'Profesional de Salud';
         if ($doctor?->hasRole('MEDICO')) {
             $professionalRole = 'Médico';
@@ -113,13 +125,24 @@
     <div class="page single-page-print">
         <div>
             <div class="header">
-                @if($logoPath && file_exists($logoPath))
-                    <img src="{{ $logoPath }}" alt="Logo" class="header-logo">
-                @endif
-                <div class="header-content">
-                    <h2>{{ strtoupper($hospitalName) }}</h2>
-                    <p>INFORME DE ATENCIÓN</p>
-                </div>
+                <table class="header-table">
+                    <tr>
+                        <td class="header-logo-cell">
+                            @if($logoSrc)
+                                <img src="{{ $logoSrc }}" alt="Logo" class="header-logo">
+                            @endif
+                        </td>
+                        <td>
+                            <div class="header-content">
+                                <h2>{{ strtoupper($hospitalName) }}</h2>
+                                <p>INFORME DE ATENCIÓN</p>
+                                <p class="company-line">RUC/NIT: {{ strtoupper($companyDocument) }}</p>
+                                <p class="company-line">Dirección: {{ $companyAddress }}</p>
+                                <p class="company-line">Teléfono: {{ $companyPhone }}</p>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
             </div>
 
              <div class="patient-data">
