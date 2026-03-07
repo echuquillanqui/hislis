@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid" x-data="attentionMonitor">
+<div class="container-fluid" x-data="attentionMonitor()">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h4 class="fw-bold text-dark mb-0">
@@ -206,11 +206,11 @@
                                                 </template>
 
                                                 <template x-if="field.type === 'date'">
-                                                    <<input type="date" class="form-control border-dark rounded-0 shadow-sm" :value="getFieldValue(exam.order_item_id, field)" @input="setFieldValue(exam.order_item_id, field, $event.target.value)">
+                                                    <input type="date" class="form-control border-dark rounded-0 shadow-sm" :value="getFieldValue(exam.order_item_id, field)" @input="setFieldValue(exam.order_item_id, field, $event.target.value)">
                                                 </template>
 
                                                 <template x-if="field.type !== 'textarea' && field.type !== 'number' && field.type !== 'date'">
-                                                    <input type="text" class="form-control border-dark rounded-0 shadow-sm" :value="getFieldValue(exam.order_item_id, field)" @input="setFieldValue(exam.order_item_id, field, $event.target.value)"
+                                                   <input type="text" class="form-control border-dark rounded-0 shadow-sm" :value="getFieldValue(exam.order_item_id, field)" @input="setFieldValue(exam.order_item_id, field, $event.target.value)">
                                                 </template>
                                             </div>
                                         </template>
@@ -257,7 +257,7 @@
 </style>
 
 <script>
-document.addEventListener('alpine:init', () => {
+const registerAttentionMonitor = () => {
     Alpine.data('attentionMonitor', () => ({
         patients: [],
         filters: {
@@ -413,6 +413,12 @@ document.addEventListener('alpine:init', () => {
             }
         }  
     }));
-});
+};
+
+if (window.Alpine) {
+    registerAttentionMonitor();
+} else {
+    document.addEventListener('alpine:init', registerAttentionMonitor);
+}
 </script>
 @endsection
