@@ -202,11 +202,25 @@ class AttentionController extends Controller
 
         $content = is_array($result->content) ? $result->content : [];
 
+        $item->load(['voucher.patient', 'itemable']);
+
+        $patient = $item->voucher->patient;
+        $voucherDate = optional($item->voucher->created_at)->toDateString();
+        $triage = $patient->triages()
+            ->when($voucherDate, fn ($query) => $query->whereDate('created_at', $voucherDate))
+            ->latest()
+            ->first();
+
+        if (!$triage) {
+            $triage = $patient->triages()->latest()->first();
+        }
+
         return view('admin.attentions.print', [
-            'item' => $item->load(['voucher.patient', 'itemable']),
+            'item' => $item,
             'result' => $result,
             'content' => $content,
             'doctor' => $result->doctor()->with('roles')->first(),
+            'triage' => $triage,
         ]);
     }
 }

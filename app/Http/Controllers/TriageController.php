@@ -12,6 +12,56 @@ class TriageController extends Controller
      * El Monitor general es manejado por AttentionController@index,
      * pero si necesitas un listado específico aquí:
      */
+
+    private function triageRules(bool $requiresPatientId = false): array
+    {
+        $rules = [
+            'temp' => 'required|numeric|between:30,45',
+            'bp' => ['required', 'regex:/^\d{2,3}\/\d{2,3}$/'],
+            'hr' => 'required|integer|between:20,250',
+            'rr' => 'required|integer|between:5,80',
+            'weight' => 'required|numeric|between:1,500',
+            'height' => 'required|numeric|between:0.3,2.8',
+            'spo2' => 'nullable|integer|between:0,100',
+            'notes' => 'nullable|string|max:1000',
+        ];
+
+        if ($requiresPatientId) {
+            $rules['patient_id'] = 'required|exists:patients,id';
+        }
+
+        return $rules;
+    }
+
+    private function triageValidationMessages(): array
+    {
+        return [
+            'required' => 'El campo :attribute es obligatorio.',
+            'numeric' => 'El campo :attribute debe ser numérico.',
+            'integer' => 'El campo :attribute debe ser un número entero.',
+            'between.numeric' => 'El campo :attribute debe estar entre :min y :max.',
+            'between.integer' => 'El campo :attribute debe estar entre :min y :max.',
+            'regex' => 'La :attribute debe tener el formato correcto (ejemplo: 120/80).',
+            'exists' => 'El paciente seleccionado no existe.',
+            'max' => 'El campo :attribute no debe superar los :max caracteres.',
+        ];
+    }
+
+    private function triageValidationAttributes(): array
+    {
+        return [
+            'patient_id' => 'paciente',
+            'temp' => 'temperatura',
+            'bp' => 'presión arterial',
+            'hr' => 'frecuencia cardíaca',
+            'rr' => 'frecuencia respiratoria',
+            'weight' => 'peso',
+            'height' => 'talla',
+            'spo2' => 'saturación de oxígeno',
+            'notes' => 'observaciones',
+        ];
+    }
+
     public function index()
     {
         $pendientes = Triage::with('patient')->latest()->get();
@@ -21,17 +71,11 @@ class TriageController extends Controller
 
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'patient_id' => 'required|exists:patients,id',
-            'temp' => 'required|numeric',
-            'bp' => 'required|string',
-            'hr' => 'required|integer',
-            'rr' => 'required|integer',
-            'weight' => 'required|numeric',
-            'height' => 'required|numeric|gt:0',
-            'spo2' => 'nullable|integer',
-            'notes' => 'nullable|string',
-        ]);
+        $data = $request->validate(
+            $this->triageRules(true),
+            $this->triageValidationMessages(),
+            $this->triageValidationAttributes()
+        );
 
         $data['bmi'] = round($data['weight'] / ($data['height'] * $data['height']), 2);
         $data['user_id'] = Auth::id();
@@ -72,14 +116,11 @@ class TriageController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $request->validate([
-            'temp' => 'required|numeric',
-            'bp' => 'required|string',
-            'hr' => 'required|integer',
-            'rr' => 'required|integer',
-            'weight' => 'required|numeric',
-            'height' => 'required|numeric',
-        ]);
+        $request->validate(
+            $this->triageRules(),
+            $this->triageValidationMessages(),
+            $this->triageValidationAttributes()
+        );
 
         $triage = Triage::findOrFail($id);
 

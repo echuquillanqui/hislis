@@ -16,6 +16,17 @@
             @csrf
             @method('PUT')
 
+            @if ($errors->any())
+                <div class="mb-6 rounded-lg border border-red-200 bg-red-50 p-4">
+                    <p class="font-semibold text-red-700 mb-2">Corrige los siguientes campos:</p>
+                    <ul class="list-disc ml-5 text-sm text-red-700">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 
                 <div class="col-span-full border-b border-gray-200 pb-2">
@@ -39,7 +50,7 @@
 
                 <div class="flex flex-col">
                     <label class="text-sm font-semibold text-gray-600 mb-1">Frec. Respiratoria (RPM)</label>
-                    <input type="number" name="rr" class="border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" required>
+                    <input type="number" name="rr" value="{{ old('rr', $triage->rr) }}" class="border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" required>
                 </div>
 
                 <div class="col-span-full border-b border-gray-200 pb-2 mt-4">
@@ -69,7 +80,7 @@
                 <div class="col-span-2 bg-blue-50 p-4 rounded-lg flex items-center justify-around border border-blue-200">
                     <div class="text-center">
                         <span class="block text-xs font-bold text-blue-600 uppercase">IMC (BMI)</span>
-                        <<span id="bmi_val" class="text-2xl font-black text-blue-800">{{ number_format((float) ($triage->bmi ?? 0), 2) }}</span>
+                        <span id="bmi_val" class="text-2xl font-black text-blue-800">{{ number_format((float) ($triage->bmi ?? 0), 2) }}</span>
                     </div>
                     <div id="bmi_tag" class="px-3 py-1 rounded text-xs font-bold bg-gray-200 text-gray-600">
                         SIN DATOS
