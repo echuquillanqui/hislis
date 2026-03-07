@@ -4,26 +4,39 @@
     <meta charset="utf-8">
     <title>Informe Médico</title>
     <style>
+        @page { size: A4; margin: 2mm; }
         body { font-family: Arial, sans-serif; margin: 14px; color: #1f2937; font-size: 12px; }
         .page { min-height: 96vh; display: flex; flex-direction: column; }
         .header { text-align: center; border-bottom: 2px solid #111827; padding-bottom: 8px; margin-bottom: 12px; }
         .header h2 { margin: 0; font-size: 20px; letter-spacing: 1px; }
         .header p { margin: 4px 0 0 0; font-size: 11px; }
 
-        .grid-3 { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
-        .grid-3 td { width: 33.33%; border: 1px solid #d1d5db; vertical-align: top; padding: 8px; }
+        .patient-data {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 12px;
+            page-break-inside: avoid;
+        }
+        .patient-card {
+            border: 1px solid #d6d9de;
+            border-radius: 8px;
+            background: linear-gradient(180deg, #f9fafb 0%, #ffffff 100%);
+            padding: 10px;
+            box-shadow: inset 0 1px 0 #ffffff;
+        }
 
         .section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #374151; margin-bottom: 4px; }
         .field { margin: 2px 0; }
         .field strong { display: inline-block; min-width: 72px; }
 
-        .triage-box { border: 1px solid #9ca3af; margin-bottom: 12px; }
+        .triage-box { border: 1px solid #9ca3af; margin-bottom: 12px; page-break-inside: avoid; }
         .triage-header { padding: 8px 10px; border-bottom: 1px solid #d1d5db; font-weight: 700; text-transform: uppercase; }
         .triage-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-        .triage-item { border-right: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; padding: 8px 10px; min-height: 56px; }
+        .triage-item { border-right: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; padding: 8px 10px; min-height: 0; height: auto; }
         .triage-item:nth-child(3n) { border-right: 0; }
         .triage-label { font-size: 10px; text-transform: uppercase; color: #4b5563; font-weight: 700; }
-        .triage-value { margin-top: 4px; font-weight: 700; }
+        .triage-value { margin-top: 4px; font-weight: 700; line-height: 1.35; word-break: break-word; }
         .triage-notes { border-top: 1px solid #e5e7eb; padding: 8px 10px; }
 
         .content { border: 1px solid #9ca3af; }
@@ -44,6 +57,20 @@
         .stamp-muted { color: #6b7280; font-size: 11px; font-weight: 700; text-transform: uppercase; }
         .signature-space { height: 56px; margin: 10px 0 12px; border-bottom: 1px solid #111827; }
         .stamp-line { font-weight: 700; text-transform: uppercase; margin: 2px 0; font-size: 11px; }
+
+        .single-page-print {
+            min-height: calc(297mm - 20mm);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+        @media print {
+            html, body { width: 210mm; height: 297mm; overflow: hidden; }
+            .single-page-print { height: calc(297mm - 20mm); overflow: hidden; }
+            .footer-signature { page-break-inside: avoid; }
+        }
     </style>
 </head>
 <body onload="window.print()">
@@ -65,34 +92,32 @@
             $professionalRole = 'Enfermero';
         }
     @endphp
-    <div class="page">
+    <div class="page single-page-print">
         <div>
             <div class="header">
                 <h2>CLÍNICA HISLIS</h2>
                 <p>INFORME DE ATENCIÓN</p>
             </div>
 
-            <table class="grid-3">
-                <tr>
-                    <td>
-                        <div class="section-title">Datos del paciente</div>
-                        <div class="field"><strong>Nombres:</strong> {{ $patient->first_name }}</div>
-                        <div class="field"><strong>Apellidos:</strong> {{ $patient->last_name }}</div>
-                        <div class="field"><strong>DNI:</strong> {{ $patient->dni }}</div>
-                    </td>
-                    <td>
-                        <div class="section-title">Datos clínicos</div>
-                        <div class="field"><strong>Servicio:</strong> {{ $item->itemable->name }}</div>
-                        <div class="field"><strong>Fecha:</strong> {{ $result->updated_at?->format('d/m/Y H:i') }}</div>
-                        <div class="field"><strong>Sexo:</strong> {{ $gender }}</div>
-                    </td>
-                    <td>
-                        <div class="section-title">Identificación</div>
-                        <div class="field"><strong>Edad:</strong> {{ $age }} años</div>
-                        <div class="field"><strong>Historia:</strong> #{{ $patient->id }}</div>
-                    </td>
-                </tr>
-            </table>
+             <div class="patient-data">
+                <div class="patient-card">
+                    <div class="section-title">Datos del paciente</div>
+                    <div class="field"><strong>Nombres:</strong> {{ $patient->first_name }}</div>
+                    <div class="field"><strong>Apellidos:</strong> {{ $patient->last_name }}</div>
+                    <div class="field"><strong>DNI:</strong> {{ $patient->dni }}</div>
+                </div>
+                <div class="patient-card">
+                    <div class="section-title">Datos clínicos</div>
+                    <div class="field"><strong>Servicio:</strong> {{ $item->itemable->name }}</div>
+                    <div class="field"><strong>Fecha:</strong> {{ $result->updated_at?->format('d/m/Y H:i') }}</div>
+                    <div class="field"><strong>Sexo:</strong> {{ $gender }}</div>
+                </div>
+                <div class="patient-card">
+                    <div class="section-title">Identificación</div>
+                    <div class="field"><strong>Edad:</strong> {{ $age }} años</div>
+                    <div class="field"><strong>Historia:</strong> #{{ $patient->id }}</div>
+                </div>
+            </div>
 
             <div class="triage-box">
                 <div class="triage-header">Datos de triaje</div>
