@@ -20,12 +20,16 @@ class AttentionController extends Controller
     {
         // 1. Obtener áreas médicas activas para las columnas del monitor
         $areas = Area::where('status', 1)
-            ->where('is_medical', 1)
+            ->where(function ($q) {
+                $q->where('is_medical', 1)
+                  ->orWhereHas('labExams', fn ($labQ) => $labQ->where('status', 1));
+            })
             ->get();
 
         // 2. Manejo de petición AJAX para reactividad del buscador y filtros
         if ($request->ajax()) {
             $fecha = $request->date ?? Carbon::now()->format('Y-m-d');
+            $labAreaId = optional($areas->firstWhere('slug', 'laboratorio'))->id;
 
             // Consulta base: Pacientes que tienen Vouchers (ventas) en la fecha seleccionada
             $query = Patient::whereHas('vouchers', function($q) use ($fecha) {
@@ -50,7 +54,7 @@ class AttentionController extends Controller
                 }
             ])
             ->get()
-            ->map(function($patient) {
+            ->map(function($patient) use ($labAreaId) {
                 // Aplanamos todos los items de todos los vouchers del día
                 $allItems = $patient->vouchers->flatMap->orderItems
                     ->filter(fn ($item) => $item->itemable);
