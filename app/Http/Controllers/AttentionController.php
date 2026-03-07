@@ -26,7 +26,6 @@ class AttentionController extends Controller
         // 2. Manejo de petición AJAX para reactividad del buscador y filtros
         if ($request->ajax()) {
             $fecha = $request->date ?? Carbon::now()->format('Y-m-d');
-            $status = $request->status ?? 'pending';
 
             // Consulta base: Pacientes que tienen Vouchers (ventas) en la fecha seleccionada
             $query = Patient::whereHas('vouchers', function($q) use ($fecha) {
@@ -51,17 +50,10 @@ class AttentionController extends Controller
                 }
             ])
             ->get()
-            ->map(function($patient) use ($status) {
+            ->map(function($patient) {
                 // Aplanamos todos los items de todos los vouchers del día
                 $allItems = $patient->vouchers->flatMap->orderItems
-                    ->filter(fn ($item) => $item->itemable)
-                    ->when($status === 'pending', fn ($items) => $items->where('status', 'pending'));
-
-                // Cargamos relaciones extra según tipo para acceder a plantilla
-                $allItems->loadMorph('itemable', [
-                    Service::class => ['template', 'area.parent.defaultTemplate', 'area.defaultTemplate'],
-                    LabExam::class  => [],
-                ]);
+                    ->filter(fn ($item) => $item->itemable);
 
                 // Estructuramos las órdenes médicas agrupadas por ID de Área
                 $patient->medical_orders = $allItems->groupBy(function($item) {
