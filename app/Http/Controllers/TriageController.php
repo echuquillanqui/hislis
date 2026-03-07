@@ -14,12 +14,46 @@ class TriageController extends Controller
      */
     public function index()
     {
-        $pendientes = Triage::with('patient')
-            ->where('temp', '0')
-            ->latest()
-            ->get();
-            
-        return view('attentions.index', compact('pendientes'));
+        $pendientes = Triage::with('patient')->latest()->get();
+
+        return view('admin.attentions.index', compact('pendientes'));
+    }
+
+    public function store(Request $request)
+    {
+        $data = $request->validate([
+            'patient_id' => 'required|exists:patients,id',
+            'temp' => 'required|numeric',
+            'bp' => 'required|string',
+            'hr' => 'required|integer',
+            'rr' => 'required|integer',
+            'weight' => 'required|numeric',
+            'height' => 'required|numeric|gt:0',
+            'spo2' => 'nullable|integer',
+            'notes' => 'nullable|string',
+        ]);
+
+        $data['bmi'] = round($data['weight'] / ($data['height'] * $data['height']), 2);
+        $data['user_id'] = Auth::id();
+
+        $triage = Triage::where('patient_id', $data['patient_id'])
+            ->whereDate('created_at', now()->toDateString())
+            ->first();
+
+        if ($triage) {
+            $triage->update($data);
+        } else {
+            $triage = Triage::create($data);
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Triaje guardado correctamente.',
+                'triage_id' => $triage->id,
+            ]);
+        }
+
+        return redirect()->route('attentions.index')->with('success', 'Triaje guardado correctamente.');
     }
 
     /**
@@ -30,8 +64,7 @@ class TriageController extends Controller
     {
         $triage = Triage::with('patient')->findOrFail($id);
         
-        // Retorna la vista en la carpeta attentions/triage.blade.php
-        return view('attentions.triage', compact('triage'));
+        return view('admin.attentions.triage', compact('triage'));
     }
 
     /**
@@ -40,10 +73,10 @@ class TriageController extends Controller
     public function update(Request $request, string $id)
     {
         $request->validate([
-            'temp'   => 'required|numeric',
-            'bp'     => 'required|string',
-            'hr'     => 'required|integer',
-            'rr'     => 'required|integer',
+            'temp' => 'required|numeric',
+            'bp' => 'required|string',
+            'hr' => 'required|integer',
+            'rr' => 'required|integer',
             'weight' => 'required|numeric',
             'height' => 'required|numeric',
         ]);
@@ -57,14 +90,15 @@ class TriageController extends Controller
         }
 
         $triage->update([
-            'user_id' => Auth::id(),
-            'temp'    => $request->temp,
-            'bp'      => $request->bp,
-            'hr'      => $request->hr,
-            'rr'      => $request->rr,
-            'weight'  => $request->weight,
-            'height'  => $request->height,
-            'bmi'     => $imc,
+            'temp' => $request->temp,
+            'bp' => $request->bp,
+            'hr' => $request->hr,
+            'rr' => $request->rr,
+            'weight' => $request->weight,
+            'height' => $request->height,
+            'bmi' => $imc,
+            'spo2' => $request->spo2,
+            'notes' => $request->notes,
         ]);
 
         // Redirigimos al monitor de atención después de guardar

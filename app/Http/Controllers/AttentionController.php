@@ -22,9 +22,23 @@ class AttentionController extends Controller
         // 1. Obtener áreas médicas activas para las columnas del monitor
         $areas = Area::where('areas.status', 1)
             ->where(function ($q) {
-                $q->where('areas.is_medical', 1)
-                  ->orWhere('areas.slug', 'triaje')
-                  ->orWhereHas('labExams', fn ($labQ) => $labQ->where('lab_exams.status', 1));
+                $q->where('areas.slug', 'triaje')
+                  ->orWhere(function ($medicalQ) {
+                      $medicalQ->where('areas.is_medical', 1)
+                          ->whereHas('services', function ($serviceQ) {
+                              $serviceQ->where('services.status', 1)
+                                  ->where(function ($templateQ) {
+                                      $templateQ->whereNotNull('services.template_id')
+                                          ->orWhere(function ($inheritQ) {
+                                              $inheritQ->whereNull('services.template_id')
+                                                  ->whereHas('area', function ($areaQ) {
+                                                      $areaQ->whereNotNull('template_id')
+                                                          ->orWhereHas('parent', fn ($parentQ) => $parentQ->whereNotNull('template_id'));
+                                                  });
+                                          });
+                                  });
+                          });
+                  });
             })
             ->get();
 
@@ -33,14 +47,14 @@ class AttentionController extends Controller
             $fecha = $request->date ?? Carbon::now()->format('Y-m-d');
 
             // Consulta base: Pacientes que tienen Vouchers (ventas) en la fecha seleccionada
-            $query = Patient::whereHas('vouchers', function($q) use ($fecha) {
+            $query = Patient::whereHas('vouchers', function ($q) use ($fecha) {
                 $q->whereDate('created_at', $fecha)
                   ->where('status', 'paid');
             });
 
             // Filtro dinámico por nombre, apellido o DNI
             if ($request->search) {
-                $query->where(function($q) use ($request) {
+                 $query->where(function ($q) use ($request) {
                     $q->where('dni', 'LIKE', "%{$request->search}%")
                       ->orWhere('first_name', 'LIKE', "%{$request->search}%")
                       ->orWhere('last_name', 'LIKE', "%{$request->search}%");
@@ -48,63 +62,58 @@ class AttentionController extends Controller
             }
 
             $patients = $query->with([
-                'vouchers' => function($q) use ($fecha) {
+                'vouchers' => function ($q) use ($fecha) {
                     $q->whereDate('created_at', $fecha)
-                      ->where('status', 'paid');
+                      ->where('status', 'paid')
+                      ->with('orderItems.itemable.area.parent');
                 },
-                'triages' => function($q) use ($fecha) {
-                    $q->whereDate('created_at', $fecha);
+                'triages' => function ($q) use ($fecha) {
+                    $q->whereDate('created_at', $fecha)->latest();
                 }
             ])
             ->get()
-            ->map(function($patient) use ($statusFilter) {
-                // Aplanamos todos los items de todos los vouchers del día
-                $allItems = $patient->vouchers->flatMap->orderItems
-                    ->filter(function ($item) use ($statusFilter) {
-                        if (!$item->itemable) {
-                            return false;
-                        }
+                ->map(function ($patient) use ($statusFilter) {
+                    $allItems = $patient->vouchers->flatMap->orderItems
+                        ->filter(function ($item) use ($statusFilter) {
+                            if (!$item->itemable || !($item->itemable instanceof Service)) {
+                                return false;
+                            }
 
-                        return $statusFilter === 'all' || $item->status !== 'completed';
-                    });
+                            if ($statusFilter !== 'all' && $item->status === 'completed') {
+                                return false;
+                            }
 
-                // Estructuramos las órdenes médicas agrupadas por ID de Área
-                $patient->medical_orders = $allItems->groupBy(function($item) {
-                    return $item->itemable->area_id; // Obtenemos el área desde el servicio/examen
-                })->map(function($group) {
-                    return $group->map(function($item) {
-                        $template = null;
+                            return (bool) $item->itemable->getActiveTemplate();
+                        });
 
-                        if ($item->itemable instanceof Service) {
+                    $patient->medical_orders = $allItems->groupBy(function ($item) {
+                        return $item->itemable->area_id;
+                    })->map(function ($group) {
+                        return $group->map(function ($item) {
                             $template = $item->itemable->getActiveTemplate();
-                        }
-                        return [
-                            'order_item_id' => $item->id,
-                            'service_name'  => $item->itemable->name,
-                            'status'        => $item->status,
-                            'type'          => class_basename($item->itemable_type), // Service o LabExam
-                            'template_name' => $template?->name,
-                            'template_schema' => $template?->schema ?? []
-                        ];
+                            return [
+                                'order_item_id' => $item->id,
+                                'service_name' => $item->itemable->name,
+                                'status' => $item->status,
+                                'type' => class_basename($item->itemable_type),
+                                'template_name' => $template?->name,
+                                'template_schema' => $template?->schema ?? [],
+                            ];
+                        })->values();
                     });
-                });
 
-                // IDs de áreas pagadas para habilitar botones en la vista
-                $patient->paid_area_ids = $patient->medical_orders->keys()->toArray();
-
-                // Resumen rápido por área para el monitor
-                $patient->area_order_counts = $patient->medical_orders
-                    ->map(fn ($orders) => $orders->count());
-
-                $patient->voucher_count = $patient->vouchers->count();
+                $patient->paid_area_ids = $patient->medical_orders->keys()->map(fn ($id) => (int) $id)->values()->toArray();
+                    $patient->area_order_counts = $patient->medical_orders->map(fn ($orders) => $orders->count());
+                    $patient->voucher_count = $patient->vouchers->count();
 
                 // Verificación de Triaje (Signos Vitales)
                 $patient->is_triaged = $patient->triages->isNotEmpty();
+                    $patient->triage_id = $patient->triages->first()?->id;
 
                 return $patient;
-             })
-            ->filter(fn ($patient) => $patient->medical_orders->isNotEmpty() || $patient->is_triaged)
-            ->values();
+                })
+                ->filter(fn ($patient) => $patient->medical_orders->isNotEmpty() || $patient->is_triaged)
+                ->values();
 
             return response()->json([
                 'patients' => $patients
@@ -121,34 +130,36 @@ class AttentionController extends Controller
     {
         $request->validate([
             'order_item_id' => 'required|exists:order_items,id',
-            'observations'  => 'required|string',
+            'observations' => 'nullable|string',
+            'template_data' => 'nullable|array',
         ]);
 
         try {
             $item = OrderItem::findOrFail($request->order_item_id);
 
-            // Si es un servicio de especialidad (Ginecología, Cardio, etc.)
+            $payloadText = $request->filled('observations')
+                ? $request->observations
+                : json_encode($request->template_data ?? [], JSON_UNESCAPED_UNICODE);
+
             if ($item->itemable_type === Service::class) {
                 $item->specialityResult()->updateOrCreate(
+                        ['order_item_id' => $item->id],
+                        [
+                            'result_text' => $payloadText,
+                            'user_id' => auth()->id(),
+                        ]
+                    );
+                } elseif ($item->itemable_type === LabExam::class) {
+                $item->labResult()->updateOrCreate(
                     ['order_item_id' => $item->id],
                     [
-                        'result_text' => $request->observations,
-                        'user_id'     => auth()->id(), // Médico que atiende
-                        'created_at'  => now()
+                        'lab_exam_id' => $item->itemable_id,
+                        'result_value' => $payloadText,
+                        'is_abnormal' => $request->boolean('is_abnormal', false),
                     ]
-                );
-            } 
-            // Si es Laboratorio
-            elseif ($item->itemable_type === LabExam::class) {
-                // Aquí se guardaría en LabResult según tu modelo
-                $item->labResults()->create([
-                    'lab_exam_id'  => $item->itemable_id,
-                    'result_value' => $request->observations,
-                    'is_abnormal'  => $request->is_abnormal ?? false
-                ]);
+               );
             }
 
-            // Actualizar estado del item a completado
             $item->update(['status' => 'completed']);
 
             return response()->json(['message' => 'Atención registrada correctamente']);

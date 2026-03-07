@@ -43,6 +43,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::resource('roles', RoleController::class);
         Route::resource('patients', PatientController::class);
         Route::get('monitor', [AttentionController::class, 'index'])->name('attentions.index');
+        Route::post('monitor', [AttentionController::class, 'store'])->name('attentions.store');
         Route::resource('triage', TriageController::class);
         Route::resource('templates', TemplateController::class);
         Route::get('templates/{template}/preview', [TemplateController::class, 'preview'])->name('templates.preview');

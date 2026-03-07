@@ -7,7 +7,7 @@
             <h4 class="fw-bold text-dark mb-0">
                 <i class="fa-solid fa-hospital-user text-primary me-2"></i> MONITOR DE ATENCIÓN CLÍNICA
             </h4>
-            <small class="text-muted fw-bold text-uppercase">Gestión de flujo y registros médicos</small>
+            <small class="text-muted fw-bold text-uppercase">Solo servicios con plantilla activa</small>
         </div>
         <div class="bg-white border border-dark px-3 py-2 fw-bold shadow-sm rounded-0">
             <i class="fa-regular fa-clock text-primary me-1"></i> <span x-text="currentTime"></span>
@@ -21,16 +21,16 @@
                     <label class="small fw-bold text-muted mb-1 text-uppercase">Búsqueda de Paciente</label>
                     <div class="input-group">
                         <span class="input-group-text bg-light border-dark border-end-0"><i class="fa-solid fa-search"></i></span>
-                        <input type="text" class="form-control border-dark rounded-0 shadow-sm ps-2" 
-                               placeholder="DNI o Apellidos..." x-model="filters.search" @input.debounce.300ms="getAtenciones()">
+                        <input type="text" class="form-control border-dark rounded-0 shadow-sm ps-2"
+                            placeholder="DNI o Apellidos..." x-model="filters.search" @input.debounce.300ms="getAtenciones()">
                     </div>
                 </div>
                 <div class="col-md-4">
                     <label class="small fw-bold text-muted mb-1 text-uppercase">Fecha de Atención</label>
                     <div class="input-group">
                         <span class="input-group-text bg-light border-dark border-end-0"><i class="fa-solid fa-calendar-day"></i></span>
-                        <input type="date" class="form-control border-dark rounded-0 shadow-sm ps-2" 
-                               x-model="filters.date" @change="getAtenciones()">
+                        <input type="date" class="form-control border-dark rounded-0 shadow-sm ps-2"
+                            x-model="filters.date" @change="getAtenciones()">
                     </div>
                 </div>
                 <div class="col-md-3">
@@ -53,14 +53,14 @@
                             <span class="small fw-bold text-secondary text-uppercase">Paciente</span>
                         </th>
                         @foreach($areas as $area)
-                            <th class="p-0 border-start border-dark border-opacity-25 header-cell" style="width: 100px;" title="{{ strtoupper($area->name) }}">
-                                <div class="py-2 px-1 cell-content">
-                                    <i class="fa-solid fa-notes-medical text-primary fs-5 mb-1 d-block"></i>
-                                    <span class="d-block text-dark fw-bold text-truncate mx-auto text-uppercase" style="font-size: 0.6rem; max-width: 85px;">
-                                        {{ Str::limit($area->name, 8, '') }}
-                                    </span>
-                                </div>
-                            </th>
+                            <th class="p-0 border-start border-dark border-opacity-25 header-cell" style="width: 110px;" title="{{ strtoupper($area->name) }}">
+                            <div class="py-2 px-1 cell-content">
+                                <i class="fa-solid fa-notes-medical text-primary fs-5 mb-1 d-block"></i>
+                                <span class="d-block text-dark fw-bold text-truncate mx-auto text-uppercase" style="font-size: 0.6rem; max-width: 85px;">
+                                    {{ Str::limit($area->name, 10, '') }}
+                                </span>
+                            </div>
+                        </th>
                         @endforeach
                     </tr>
                 </thead>
@@ -76,14 +76,14 @@
 
                             @foreach($areas as $area)
                             <td class="p-2 border-start border-light text-center">
-                                <template x-if="'{{ $area->slug }}' === 'triaje' || p.paid_area_ids.includes({{ $area->id }})">
+                                <template x-if="isAreaEnabled(p, {{ $area->id }}, '{{ $area->slug }}')">
                                     <button class="btn btn-sm w-100 py-2 border-2 shadow-sm position-relative rounded-0"
                                             :title="'Abrir: {{ strtoupper($area->name) }}'"
                                             :class="getBtnStyle(p, '{{ $area->slug }}')"
                                             @click="openAttention(p, {{ $area->id }}, '{{ $area->name }}', '{{ $area->slug }}')">
                                         
                                         <i class="fa-solid d-block mb-1" :class="'{{ $area->slug }}' === 'triaje' ? 'fa-stethoscope' : 'fa-hand-holding-medical'"></i>
-                                        <span class="small fw-bold">ATENDER</span>
+                                        <span class="small fw-bold" x-text="'{{ $area->slug }}' === 'triaje' ? 'TRIAJE' : 'ATENDER'"></span>
                                         
                                         <template x-if="!p.is_triaged && '{{ $area->slug }}' !== 'triaje'">
                                             <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle shadow-sm"></span>
@@ -91,7 +91,7 @@
                                     </button>
                                 </template>
 
-                                <template x-if="'{{ $area->slug }}' !== 'triaje' && !p.paid_area_ids.includes({{ $area->id }})">
+                                <template x-if="!isAreaEnabled(p, {{ $area->id }}, '{{ $area->slug }}')">
                                     <span class="text-muted opacity-25 small">-</span>
                                 </template>
                             </td>
@@ -114,12 +114,12 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-0">
-                    <ul class="nav nav-tabs bg-light px-3 pt-2 border-bottom border-dark">
+                    <ul class="nav nav-tabs bg-light px-3 pt-2 border-bottom border-dark" x-show="currentAreaSlug !== 'triaje'">
                         <template x-for="(exam, index) in activeExams" :key="index">
                             <li class="nav-item">
-                                <button class="nav-link border-dark border-bottom-0 fw-bold me-1 rounded-0 small text-uppercase" 
-                                        :class="activeTab === index ? 'active bg-white text-primary border-bottom-0' : 'text-muted'"
-                                        @click="activeTab = index" style="margin-bottom: -1px;">
+                                <button class="nav-link border-dark border-bottom-0 fw-bold me-1 rounded-0 small text-uppercase"
+                                    :class="activeTab === index ? 'active bg-white text-primary border-bottom-0' : 'text-muted'"
+                                    @click="activeTab = index" style="margin-bottom: -1px;">
                                     <i class="fa-solid fa-file-waveform me-1"></i>
                                     <span x-text="exam.service_name"></span>
                                 </button>
@@ -128,11 +128,62 @@
                     </ul>
 
                     <div class="p-4 bg-white" style="min-height: 450px;">
+
+                        <template x-if="currentAreaSlug === 'triaje'">
+                            <div>
+                                <h5 class="fw-bold border-bottom pb-2 mb-3 text-dark">REGISTRO DE TRIAJE</h5>
+                                <div class="row g-3">
+                                    <div class="col-md-3">
+                                        <label class="small fw-bold mb-1">Temperatura (°C)</label>
+                                        <input type="number" step="0.1" class="form-control border-dark rounded-0" x-model="triage.temp">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="small fw-bold mb-1">Presión Arterial</label>
+                                        <input type="text" class="form-control border-dark rounded-0" placeholder="120/80" x-model="triage.bp">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="small fw-bold mb-1">Frec. Cardíaca</label>
+                                        <input type="number" class="form-control border-dark rounded-0" x-model="triage.hr">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="small fw-bold mb-1">Frec. Respiratoria</label>
+                                        <input type="number" class="form-control border-dark rounded-0" x-model="triage.rr">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="small fw-bold mb-1">Peso (kg)</label>
+                                        <input type="number" step="0.01" class="form-control border-dark rounded-0" x-model="triage.weight">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="small fw-bold mb-1">Talla (m)</label>
+                                        <input type="number" step="0.01" class="form-control border-dark rounded-0" x-model="triage.height">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="small fw-bold mb-1">SpO2</label>
+                                        <input type="number" class="form-control border-dark rounded-0" x-model="triage.spo2">
+                                    </div>
+                                    <div class="col-md-12">
+                                        <label class="small fw-bold mb-1">Notas</label>
+                                        <textarea class="form-control border-dark rounded-0" rows="4" x-model="triage.notes"></textarea>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between mt-4">
+                                    <template x-if="selectedPatient.triage_id">
+                                        <a class="btn btn-outline-secondary rounded-0" :href="`{{ url('admin/triage') }}/${selectedPatient.triage_id}/edit`">Abrir vista completa</a>
+                                    </template>
+                                    <button class="btn btn-primary fw-bold px-4 border-2 border-dark rounded-0 shadow ms-auto" @click="saveTriage()" :disabled="saving">
+                                        <i class="fa-solid fa-save me-1"></i> GUARDAR TRIAJE
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+
+
                         <template x-for="(exam, index) in activeExams" :key="index">
-                            <div x-show="activeTab === index" x-transition>
-                                <template x-if="!selectedPatient.is_triaged && currentAreaSlug !== 'triaje'">
-                                    <div class="alert alert-warning rounded-0 border-dark mb-4 py-2 small fw-bold shadow-sm">
-                                        <i class="fa-solid fa-triangle-exclamation me-2"></i> PACIENTE PENDIENTE DE TRIAJE
+                            <div x-show="currentAreaSlug !== 'triaje' && activeTab === index" x-transition>
+                                <template x-if="!selectedPatient.is_triaged">
+                                    <div class="alert alert-warning rounded-0 border-dark mb-4 py-2 small fw-bold shadow-sm d-flex justify-content-between align-items-center">
+                                        <span><i class="fa-solid fa-triangle-exclamation me-2"></i> PACIENTE PENDIENTE DE TRIAJE</span>
+                                        <button class="btn btn-sm btn-dark rounded-0" @click="goToTriage(selectedPatient)">Ir a triaje</button>
                                     </div>
                                 </template>
 
@@ -147,19 +198,19 @@
                                                 <label class="small fw-bold mb-1 text-uppercase" x-text="field.label"></label>
 
                                                 <template x-if="field.type === 'textarea'">
-                                                    <textarea class="form-control border-dark rounded-0 shadow-sm" rows="6" placeholder="Completar campo..."></textarea>
+                                                    <textarea class="form-control border-dark rounded-0 shadow-sm" rows="6" placeholder="Completar campo..." :value="getFieldValue(exam.order_item_id, field)" @input="setFieldValue(exam.order_item_id, field, $event.target.value)"></textarea>
                                                 </template>
 
                                                 <template x-if="field.type === 'number'">
-                                                    <input type="number" class="form-control border-dark rounded-0 shadow-sm" placeholder="Ingrese valor">
+                                                    <input type="number" class="form-control border-dark rounded-0 shadow-sm" :value="getFieldValue(exam.order_item_id, field)" @input="setFieldValue(exam.order_item_id, field, $event.target.value)">
                                                 </template>
 
                                                 <template x-if="field.type === 'date'">
-                                                    <input type="date" class="form-control border-dark rounded-0 shadow-sm">
+                                                    <<input type="date" class="form-control border-dark rounded-0 shadow-sm" :value="getFieldValue(exam.order_item_id, field)" @input="setFieldValue(exam.order_item_id, field, $event.target.value)">
                                                 </template>
 
                                                 <template x-if="field.type !== 'textarea' && field.type !== 'number' && field.type !== 'date'">
-                                                    <input type="text" class="form-control border-dark rounded-0 shadow-sm" placeholder="Completar campo...">
+                                                    <input type="text" class="form-control border-dark rounded-0 shadow-sm" :value="getFieldValue(exam.order_item_id, field)" @input="setFieldValue(exam.order_item_id, field, $event.target.value)"
                                                 </template>
                                             </div>
                                         </template>
@@ -174,7 +225,7 @@
                                 </div>
 
                                 <div class="text-end mt-4">
-                                    <button class="btn btn-primary fw-bold px-4 border-2 border-dark rounded-0 shadow">
+                                    <button class="btn btn-primary fw-bold px-4 border-2 border-dark rounded-0 shadow" @click="saveExam(exam)" :disabled="saving || !selectedPatient.is_triaged">
                                         <i class="fa-solid fa-save me-1"></i> GUARDAR RESULTADO
                                     </button>
                                 </div>
@@ -209,7 +260,7 @@
 function attentionMonitor() {
     return {
         patients: [],
-        filters: { 
+        filters: {
             search: '', 
             status: 'pending',
             date: new Date().toLocaleDateString('en-CA')
@@ -220,6 +271,11 @@ function attentionMonitor() {
         activeExams: [],
         activeTab: 0,
         currentTime: '',
+        formResults: {},
+        saving: false,
+        triage: {
+            temp: '', bp: '', hr: '', rr: '', weight: '', height: '', spo2: '', notes: ''
+        },
 
         init() {
             this.getAtenciones();
@@ -231,6 +287,10 @@ function attentionMonitor() {
                 this.currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             };
             update(); setInterval(update, 60000);
+        },
+
+        isAreaEnabled(patient, areaId, slug) {
+            return slug === 'triaje' || patient.paid_area_ids.includes(areaId);
         },
 
         getAtenciones() {
@@ -252,16 +312,104 @@ function attentionMonitor() {
             this.currentAreaName = areaName;
             this.currentAreaSlug = areaSlug;
             
-            if(areaSlug === 'triaje') {
-                this.activeExams = [{ service_name: 'SIGNOS VITALES', service_slug: 'triage', template_schema: [] }];
+            if (areaSlug === 'triaje') {
+                this.resetTriage();
+                this.activeExams = [];
             } else {
                 // Filtramos las órdenes que corresponden solo a esta área
                 this.activeExams = patient.medical_orders[areaId] || [];
+                this.activeTab = 0;
             }
 
-            if(this.activeExams.length > 0) {
-                this.activeTab = 0;
-                new bootstrap.Modal(document.getElementById('modalAttention')).show();
+            new bootstrap.Modal(document.getElementById('modalAttention')).show();
+        },
+
+        goToTriage(patient) {
+            const triageArea = @json($areas->firstWhere('slug', 'triaje')?->id ?? null);
+            if (!triageArea) return;
+            this.openAttention(patient, triageArea, 'TRIAJE', 'triaje');
+        },
+
+        resetTriage() {
+            this.triage = { temp: '', bp: '', hr: '', rr: '', weight: '', height: '', spo2: '', notes: '' };
+        },
+
+        getFieldKey(field) {
+            return field.key || field.name || field.label;
+        },
+
+        getFieldValue(orderItemId, field) {
+            const key = this.getFieldKey(field);
+            return this.formResults[orderItemId]?.[key] || '';
+        },
+
+        setFieldValue(orderItemId, field, value) {
+            const key = this.getFieldKey(field);
+            if (!this.formResults[orderItemId]) {
+                this.formResults[orderItemId] = {};
+            }
+            this.formResults[orderItemId][key] = value;
+        },
+
+        async saveExam(exam) {
+            this.saving = true;
+            try {
+                const response = await fetch(`{{ route('attentions.store') }}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        order_item_id: exam.order_item_id,
+                        template_data: this.formResults[exam.order_item_id] || {},
+                    })
+                });
+
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.message || data.error || 'No se pudo guardar el resultado.');
+                }
+
+                toastr.success(data.message || 'Resultado guardado.');
+                this.getAtenciones();
+            } catch (error) {
+                toastr.error(error.message);
+            } finally {
+                this.saving = false;
+            }
+        },
+
+        async saveTriage() {
+            this.saving = true;
+            try {
+                const response = await fetch(`{{ route('triage.store') }}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        patient_id: this.selectedPatient.id,
+                        ...this.triage,
+                    })
+                });
+
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.message || data.error || 'No se pudo guardar el triaje.');
+                }
+
+                toastr.success(data.message || 'Triaje guardado.');
+                this.selectedPatient.is_triaged = true;
+                this.selectedPatient.triage_id = data.triage_id;
+                this.getAtenciones();
+            } catch (error) {
+                toastr.error(error.message);
+            } finally {
+                this.saving = false;
             }
         }
     }
