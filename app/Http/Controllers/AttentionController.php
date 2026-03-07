@@ -113,8 +113,19 @@ class AttentionController extends Controller
                     $patient->voucher_count = $patient->vouchers->count();
 
                 // Verificación de Triaje (Signos Vitales)
-                $patient->is_triaged = $patient->triages->isNotEmpty();
-                    $patient->triage_id = $patient->triages->first()?->id;
+                $latestTriage = $patient->triages->first();
+                $patient->is_triaged = $latestTriage !== null;
+                    $patient->triage_id = $latestTriage?->id;
+                    $patient->triage_data = $latestTriage ? [
+                        'temp' => $latestTriage->temp,
+                        'bp' => $latestTriage->bp,
+                        'hr' => $latestTriage->hr,
+                        'rr' => $latestTriage->rr,
+                        'weight' => $latestTriage->weight,
+                        'height' => $latestTriage->height,
+                        'spo2' => $latestTriage->spo2,
+                        'notes' => $latestTriage->notes,
+                    ] : null;
 
                 return $patient;
                 })
@@ -195,6 +206,7 @@ class AttentionController extends Controller
             'item' => $item->load(['voucher.patient', 'itemable']),
             'result' => $result,
             'content' => $content,
+            'doctor' => $result->doctor()->with('roles')->first(),
         ]);
     }
 }

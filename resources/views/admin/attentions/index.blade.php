@@ -325,7 +325,7 @@ const registerAttentionMonitor = () => {
             this.currentAreaSlug = areaSlug;
             
             if (areaSlug === 'triaje') {
-                this.resetTriage();
+                this.hydrateTriageFromPatient();
                 this.activeExams = [];
             } else {
                 // Filtramos las órdenes que corresponden solo a esta área
@@ -345,6 +345,25 @@ const registerAttentionMonitor = () => {
 
         resetTriage() {
             this.triage = { temp: '', bp: '', hr: '', rr: '', weight: '', height: '', spo2: '', notes: '' };
+        },
+
+        hydrateTriageFromPatient() {
+            const source = this.selectedPatient?.triage_data;
+            if (!source) {
+                this.resetTriage();
+                return;
+            }
+
+            this.triage = {
+                temp: source.temp ?? '',
+                bp: source.bp ?? '',
+                hr: source.hr ?? '',
+                rr: source.rr ?? '',
+                weight: source.weight ?? '',
+                height: source.height ?? '',
+                spo2: source.spo2 ?? '',
+                notes: source.notes ?? '',
+            };
         },
 
         getFieldKey(field) {
