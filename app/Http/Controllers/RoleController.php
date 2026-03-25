@@ -10,8 +10,23 @@ class RoleController extends Controller
 {
     public function index()
     {
-        $roles = Role::with('permissions')->get();
+        $roles = Role::withCount('permissions')->orderBy('name')->get();
         return view('admin.roles.index', compact('roles'));
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:50|unique:roles,name',
+            'guard_name' => 'nullable|string|max:50',
+        ]);
+
+        Role::create([
+            'name' => $validated['name'],
+            'guard_name' => $validated['guard_name'] ?? 'web',
+        ]);
+
+        return redirect()->route('roles.index')->with('success', 'Rol creado correctamente.');
     }
 
     public function edit(Role $role)
@@ -41,5 +56,16 @@ class RoleController extends Controller
         $role->syncPermissions($permissions);
         
         return redirect()->route('roles.index')->with('success', 'Permisos del Rol actualizados en bloque.');
+    }
+
+    public function destroy(Role $role)
+    {
+        if ($role->name === 'super-admin') {
+            return redirect()->route('roles.index')->with('error', 'El rol super-admin no puede eliminarse.');
+        }
+
+        $role->delete();
+
+        return redirect()->route('roles.index')->with('success', 'Rol eliminado correctamente.');
     }
 }

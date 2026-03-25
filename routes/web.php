@@ -37,7 +37,7 @@ Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name
 Route::group(['middleware' => ['auth']], function () {
 
     Route::resource('settings', SettingController::class)->only(['index', 'update']);
-    Route::prefix('admin')->group(function () {
+    Route::prefix('admin')->middleware('route.permission')->group(function () {
         Route::resource('areas', AreaController::class);
         Route::resource('users', UserController::class);
         Route::resource('roles', RoleController::class);
