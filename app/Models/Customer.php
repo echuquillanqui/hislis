@@ -7,38 +7,44 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Patient extends Model
+class Customer extends Model
 {
     use HasFactory;
 
     protected $fillable = [
+        'customer_type_id',
         'document_type_id',
         'document_number',
-        'dni',
-        'first_name',
-        'last_name',
+        'business_name',
+        'commercial_name',
+        'contact_name',
         'phone',
         'email',
         'address',
-        'clinical_history_number',
-        'origin',
-        'observations',
-        'birth_date',
-        'gender',
+        'allows_credit',
+        'credit_limit',
+        'payment_due_days',
         'status',
     ];
 
     protected $casts = [
-        'birth_date' => 'date',
+        'allows_credit' => 'boolean',
+        'credit_limit' => 'decimal:2',
         'status' => 'boolean',
     ];
+
+    public function type(): BelongsTo
+    {
+        return $this->belongsTo(CustomerType::class, 'customer_type_id');
+    }
 
     public function documentType(): BelongsTo
     {
         return $this->belongsTo(DocumentType::class);
     }
 
-    public function appointments(): HasMany { return $this->hasMany(Appointment::class); }
-    public function vouchers(): HasMany { return $this->hasMany(Voucher::class); }
-    public function triages(): HasMany { return $this->hasMany(Triage::class); }
+    public function priceLists(): HasMany
+    {
+        return $this->hasMany(CustomerPriceList::class);
+    }
 }
