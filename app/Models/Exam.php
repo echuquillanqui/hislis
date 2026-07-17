@@ -18,6 +18,7 @@ class Exam extends Model
         'description',
         'default_turnaround_minutes',
         'requires_fasting',
+        'template_id',
         'status',
     ];
 
@@ -44,6 +45,8 @@ class Exam extends Model
     {
         return $this->hasMany(ExamMethod::class);
     }
+
+    public function template() { return $this->belongsTo(Template::class); }
 
     public function tariffItems(): MorphMany
     {

@@ -19,4 +19,5 @@ class LabOrderItem extends Model
     public function orderable(): MorphTo { return $this->morphTo(); }
     public function exam(): BelongsTo { return $this->belongsTo(Exam::class); }
     public function samples(): BelongsToMany { return $this->belongsToMany(LabSample::class, 'lab_order_item_lab_sample')->withTimestamps(); }
+    public function resultRecord() { return $this->hasOne(LabResultRecord::class); }
 }
