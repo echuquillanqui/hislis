@@ -2,19 +2,28 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StorePatientRequest;
+use App\Http\Requests\UpdatePatientRequest;
 use App\Models\Patient;
+use App\Services\Patients\PatientService;
 use Illuminate\Http\Request;
 
 class PatientController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Patient::query();
+        $query = Patient::query()->with('documentType');
 
         if ($request->search) {
-            $query->where('dni', 'LIKE', "%{$request->search}%")
-                  ->orWhere('last_name', 'LIKE', "%{$request->search}%")
-                  ->orWhere('first_name', 'LIKE', "%{$request->search}%");
+            $search = $request->search;
+
+            $query->where(function ($query) use ($search) {
+                $query->where('dni', 'LIKE', "%{$search}%")
+                    ->orWhere('document_number', 'LIKE', "%{$search}%")
+                    ->orWhere('clinical_history_number', 'LIKE', "%{$search}%")
+                    ->orWhere('last_name', 'LIKE', "%{$search}%")
+                    ->orWhere('first_name', 'LIKE', "%{$search}%");
+            });
         }
 
         $patients = $query->orderBy('id', 'desc')->paginate(10);
@@ -26,45 +35,28 @@ class PatientController extends Controller
         return view('admin.patients.index');
     }
 
-    public function store(Request $request)
+    public function store(StorePatientRequest $request, PatientService $patientService)
     {
-        $validated = $request->validate([
-            'dni' => 'required|unique:patients,dni',
-            'first_name' => 'required|string|max:100',
-            'last_name' => 'required|string|max:100',
-            'birth_date' => 'required|date',
-            'gender' => 'required|in:M,F',
-            'phone' => 'nullable|string'
-        ]);
+        $patientService->create($request->validated());
 
-        Patient::create($validated);
         return back()->with('success', 'Paciente registrado correctamente.');
     }
 
-    public function update(Request $request, Patient $patient)
+    public function update(UpdatePatientRequest $request, Patient $patient, PatientService $patientService)
     {
-        $validated = $request->validate([
-            'dni' => 'required|unique:patients,dni,' . $patient->id,
-            'first_name' => 'required|string|max:100',
-            'last_name' => 'required|string|max:100',
-            'birth_date' => 'required|date',
-            'gender' => 'required|in:M,F',
-            'phone' => 'nullable|string'
-        ]);
+        $patientService->update($patient, $request->validated());
 
-        $patient->update($validated);
         return back()->with('success', 'Datos actualizados.');
     }
 
     public function destroy(Patient $patient)
     {
-        // VALIDACIÓN DE INTEGRIDAD
-        // Si el paciente tiene registros en tablas hijas, abortamos el borrado.
-        if ($patient->triages()->exists() || $patient->appointments()->exists()) {
-            return back()->with('error', 'No se puede eliminar: El paciente ya cuenta con historial clínico o citas.');
+        if ($patient->triages()->exists() || $patient->appointments()->exists() || $patient->vouchers()->exists()) {
+            return back()->with('error', 'No se puede eliminar: El paciente ya cuenta con historial clínico, citas u órdenes.');
         }
 
         $patient->delete();
+
         return back()->with('success', 'Registro eliminado correctamente.');
     }
 }

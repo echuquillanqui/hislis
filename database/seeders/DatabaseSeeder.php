@@ -125,6 +125,7 @@ class DatabaseSeeder extends Seeder
             LisRolesAndPermissionsSeeder::class,
             LisCatalogSeeder::class,
             LisAdministrationSeeder::class,
+            LisPatientCustomerSeeder::class,
         ]);
     }
 }
