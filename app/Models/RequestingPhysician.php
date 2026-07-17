@@ -5,31 +5,24 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Patient extends Model
+class RequestingPhysician extends Model
 {
     use HasFactory;
 
     protected $fillable = [
         'document_type_id',
+        'physician_specialty_id',
         'document_number',
-        'dni',
         'first_name',
         'last_name',
+        'license_number',
         'phone',
         'email',
-        'address',
-        'clinical_history_number',
-        'origin',
-        'observations',
-        'birth_date',
-        'gender',
         'status',
     ];
 
     protected $casts = [
-        'birth_date' => 'date',
         'status' => 'boolean',
     ];
 
@@ -38,7 +31,8 @@ class Patient extends Model
         return $this->belongsTo(DocumentType::class);
     }
 
-    public function appointments(): HasMany { return $this->hasMany(Appointment::class); }
-    public function vouchers(): HasMany { return $this->hasMany(Voucher::class); }
-    public function triages(): HasMany { return $this->hasMany(Triage::class); }
+    public function specialty(): BelongsTo
+    {
+        return $this->belongsTo(PhysicianSpecialty::class, 'physician_specialty_id');
+    }
 }

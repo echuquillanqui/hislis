@@ -120,5 +120,13 @@ class DatabaseSeeder extends Seeder
         }
 
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
+        $this->call([
+            LisRolesAndPermissionsSeeder::class,
+            LisCatalogSeeder::class,
+            LisAdministrationSeeder::class,
+            LisPatientCustomerSeeder::class,
+            LisExamCatalogSeeder::class,
+        ]);
     }
 }
