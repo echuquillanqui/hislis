@@ -126,6 +126,7 @@ class DatabaseSeeder extends Seeder
             LisCatalogSeeder::class,
             LisAdministrationSeeder::class,
             LisPatientCustomerSeeder::class,
+            LisExamCatalogSeeder::class,
         ]);
     }
 }
