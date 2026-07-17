@@ -29,6 +29,7 @@
                     <tr>
                         <th class="ps-4 py-3">Nombre de Plantilla</th>
                         <th>Estructura (Campos)</th>
+                        <th>Estado</th>
                         <th class="text-center">Cant. Campos</th>
                         <th class="text-end pe-4">Acciones</th>
                     </tr>
@@ -51,6 +52,7 @@
                                     </template>
                                 </div>
                             </td>
+                            <td><span class="badge" :class="t.publication_status === 'published' ? 'bg-success' : 'bg-secondary'" x-text="t.publication_status"></span></td>
                             <td class="text-center">
                                 <span class="badge rounded-pill bg-dark px-3" x-text="getFields(t.schema).length"></span>
                             </td>
@@ -59,6 +61,7 @@
                                     <a :href="`/admin/templates/${t.id}/preview`" class="btn btn-sm btn-white border" title="Vista Previa">
                                         <i class="fa-solid fa-eye text-info"></i>
                                     </a>
+                                    <form :action="`/admin/templates/${t.id}/publish`" method="POST" class="d-inline">@csrf<button class="btn btn-sm btn-white border" title="Publicar"><i class="fa-solid fa-paper-plane text-success"></i></button></form>
                                     <a :href="`/admin/templates/${t.id}/edit`" class="btn btn-sm btn-white border" title="Editar">
                                         <i class="fa-solid fa-pen-to-square text-warning"></i>
                                     </a>
@@ -74,7 +77,7 @@
                     </template>
                     <template x-if="filteredTemplates.length === 0">
                         <tr>
-                            <td colspan="4" class="text-center py-5 text-muted">
+                            <td colspan="5" class="text-center py-5 text-muted">
                                 <i class="fa-solid fa-folder-open fa-3x mb-3 opacity-25"></i>
                                 <p class="mb-0">No se encontraron plantillas con ese nombre.</p>
                             </td>
@@ -108,7 +111,9 @@ function templateApp() {
         getFields(schema) {
             // Maneja tanto string JSON como array por el problema de casting previo
             try {
-                return typeof schema === 'string' ? JSON.parse(schema) : (schema || []);
+                const parsed = typeof schema === 'string' ? JSON.parse(schema) : (schema || []);
+                if (parsed.length && parsed[0].fields) return parsed.flatMap(section => section.fields || []);
+                return parsed;
             } catch (e) {
                 return [];
             }

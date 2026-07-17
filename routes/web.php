@@ -46,8 +46,9 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('monitor', [AttentionController::class, 'store'])->name('attentions.store');
         Route::get('monitor/{item}/print', [AttentionController::class, 'print'])->name('attentions.print');
         Route::resource('triage', TriageController::class);
-        Route::resource('templates', TemplateController::class);
+        Route::post('templates/{template}/publish', [TemplateController::class, 'publish'])->name('templates.publish');
         Route::get('templates/{template}/preview', [TemplateController::class, 'preview'])->name('templates.preview');
+        Route::resource('templates', TemplateController::class);
         Route::resource('specialty_labs', SpecialtyLabController::class)->names('specialty_labs');
 
         
