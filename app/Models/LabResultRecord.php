@@ -19,4 +19,6 @@ class LabResultRecord extends Model
     public function examMethod(): BelongsTo { return $this->belongsTo(ExamMethod::class); }
     public function values(): HasMany { return $this->hasMany(LabResultValue::class); }
     public function corrections(): HasMany { return $this->hasMany(LabResultCorrection::class); }
+    public function microbiologyCultures(): HasMany { return $this->hasMany(MicrobiologyCulture::class); }
 }
+
