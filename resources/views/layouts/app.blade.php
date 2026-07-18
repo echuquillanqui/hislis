@@ -79,7 +79,7 @@
         @auth
         <nav class="navbar navbar-expand-lg navbar-light navbar-hosp shadow-sm">
             <div class="container-fluid">
-                <a class="navbar-brand fw-bold text-primary" href="{{ url('/home') }}">
+                <a class="navbar-brand fw-bold text-primary" href="{{ route('home') }}">
                     <i class="fa-solid fa-hospital-user me-2"></i> {{ $setting->hospital_name ?? 'CENTRO MÉDICO' }}
                 </a>
                 
@@ -88,150 +88,7 @@
                 </button>
 
                 <div class="collapse navbar-collapse" id="navContent">
-                    <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
-                        
-                        {{-- Módulo HIS: Solo SuperAdmin, Admin, Recepcion y Medico --}}
-                        @hasanyrole('SUPERADMIN|ADMINISTRADOR|RECEPCION|MEDICO|super-admin|administrador|recepcion|tecnico-laboratorio|responsable-area|profesional-validador')
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                <i class="fa-solid fa-hospital-user"></i> HIS (Pacientes)
-                            </a>
-                            <ul class="dropdown-menu shadow">
-                                <li><a class="dropdown-item" href="{{ route('patients.index') }}"><i class="fa-solid fa-user-plus me-2"></i> Admisión de Pacientes</a></li>
-                                <li><a class="dropdown-item" href="#"><i class="fa-solid fa-calendar-check me-2"></i> Agenda de Citas</a></li>
-                                <li><a class="dropdown-item" href="{{ route('areas.index') }}"><i class="fa-solid fa-layer-group me-2"></i> Gestión de Áreas</a></li>
-                                <li>
-                                    <a class="dropdown-item {{ request()->routeIs('templates.*') ? 'bg-primary text-white' : '' }}" 
-                                    href="{{ route('templates.index') }}">
-                                        <i class="fas fa-file-medical me-2"></i> Plantillas de Historias
-                                    </a>
-                                </li>
-
-                                <li>
-                                    <a class="dropdown-item {{ request()->routeIs('bundles.*') ? 'bg-primary text-white' : '' }}" 
-                                    href="{{ route('bundles.index') }}">
-                                        <i class="fas fa-layer-group me-2"></i> Paquetes y Perfiles
-                                    </a>
-                                </li>
-
-                                <li class="nav-item">
-                                    <a href="{{ route('vouchers.index') }}" 
-                                    class="nav-link {{ request()->routeIs('vouchers.*') ? 'active bg-primary text-white' : 'text-dark' }}">
-                                        <div class="d-flex align-items-center">
-                                            <i class="fas fa-file-invoice-dollar me-2 {{ request()->routeIs('vouchers.*') ? 'text-white' : 'text-primary' }}"></i>
-                                            <span>Ventas y Vouchers</span>
-                                        </div>
-                                    </a>
-                                </li>
-
-                                <li class="nav-item ms-3 small">
-                                    <a href="{{ route('vouchers.create') }}" class="nav-link text-muted">
-                                        <i class="fas fa-plus-circle me-1"></i> Generar Orden
-                                    </a>
-                                </li>
-                                
-
-                                <li class="nav-item">
-                                    <a class="nav-link {{ request()->routeIs('services.*') ? 'active bg-primary text-white' : '' }}" 
-                                    href="{{ route('services.index') }}">
-                                        <i class="fas fa-concierge-bell me-2"></i>
-                                        <span>Asignar Plantilla</span>
-                                    </a>
-                                </li>
-                                {{-- Enlace a Usuarios --}}
-                                <li>
-                                    <a class="dropdown-item" href="{{ route('users.index') }}">
-                                        <i class="fa-solid fa-users text-success me-2"></i> Gestión de Personal
-                                    </a>
-                                </li>
-
-                                {{-- Enlace a Roles y Permisos --}}
-                                <li>
-                                    <a class="dropdown-item" href="{{ route('roles.index') }}">
-                                        <i class="fa-solid fa-shield-halved text-danger me-2"></i> Roles y Permisos
-                                    </a>
-                                </li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="#"><i class="fa-solid fa-file-medical me-2"></i> Atención Médica</a></li>
-                                <li class="nav-item">
-                                    <a class="nav-link {{ request()->routeIs('attentions.index') ? 'active bg-primary text-white fw-bold shadow-sm' : 'text-dark' }}" 
-                                    href="{{ route('attentions.index') }}" 
-                                    style="border-radius: 0; border-left: 4px solid {{ request()->routeIs('attentions.index') ? '#0d6efd' : 'transparent' }};">
-                                        <div class="d-flex align-items-center">
-                                            <i class="fa-solid fa-desktop me-2 {{ request()->routeIs('attentions.index') ? 'text-white' : 'text-primary' }}"></i>
-                                            <span>MONITOR GLOBAL</span>
-                                        </div>
-                                    </a>
-                                </li>
-                            </ul>
-                        </li>
-                        @endhasanyrole
-
-                        {{-- Módulo LIS: Solo SuperAdmin, Admin y Laboratorio --}}
-                        @hasanyrole('SUPERADMIN|ADMINISTRADOR|LABORATORIO|super-admin|administrador|tecnico-laboratorio|responsable-area|profesional-validador|microbiologia')
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle {{ request()->routeIs('specialty_labs.*', 'lab_exams.*') ? 'active bg-primary text-white' : '' }}" href="#" role="button" data-bs-toggle="dropdown">
-                                <i class="fa-solid fa-microscope {{ request()->routeIs('specialty_labs.*', 'lab_exams.*') ? 'text-white' : '' }}"></i> LIS (Laboratorio)
-                            </a>
-                            <ul class="dropdown-menu shadow">
-
-                                <li>
-                                    <a class="dropdown-item py-2 {{ request()->routeIs('specialty_labs.*') ? 'bg-primary text-white' : '' }}" href="{{ route('specialty_labs.index') }}">
-                                        <i class="fa-solid fa-microscope me-2 {{ request()->routeIs('specialty_labs.*') ? 'text-white' : 'text-muted' }}"></i> Especialidades
-                                    </a>
-                                </li>
-
-                                <li>
-                                    <a class="dropdown-item py-2 {{ request()->routeIs('lab_exams.*') ? 'bg-primary text-white' : '' }}" href="{{ route('lab_exams.index') }}">
-                                        <i class="fa-solid fa-list-check me-2 {{ request()->routeIs('lab_exams.*') ? 'text-white' : 'text-muted' }}"></i> Catálogo de Exámenes
-                                    </a>
-                                </li>
-                                <li><a class="dropdown-item py-2" href="{{ route('inventory.index') }}#productos"><i class="fa-solid fa-prescription-bottle-medical me-2 text-muted"></i> Insumos y reactivos</a></li>
-                                <li><a class="dropdown-item py-2" href="{{ route('inventory.index') }}#kardex"><i class="fa-solid fa-clipboard-list me-2 text-muted"></i> Kardex de consumos</a></li>
-                                <li><a class="dropdown-item" href="#"><i class="fa-solid fa-vial me-2"></i> Toma de Muestras</a></li>
-                                <li><a class="dropdown-item" href="#"><i class="fa-solid fa-flask me-2"></i> Ingreso de Resultados</a></li>
-                            </ul>
-                        </li>
-                        @endhasanyrole
-
-                        {{-- Módulo Caja: Solo SuperAdmin, Admin y Cajero --}}
-                        @hasanyrole('SUPERADMIN|ADMINISTRADOR|CAJERO|super-admin|administrador|caja')
-                        <li class="nav-item">
-                            <a class="nav-link" href="#"><i class="fa-solid fa-cash-register"></i> Ventas/Caja</a>
-                        </li>
-                        @endhasanyrole
-
-                        {{-- Módulo Gerencial: KPIs y alertas --}}
-                        @hasanyrole('SUPERADMIN|ADMINISTRADOR|super-admin|administrador|gerencia|auditor')
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('dashboard.management.*') ? 'active bg-primary text-white' : '' }}" href="{{ route('dashboard.management.index') }}">
-                                <i class="fa-solid fa-chart-line {{ request()->routeIs('dashboard.management.*') ? 'text-white' : '' }}"></i> Dashboard
-                            </a>
-                        </li>
-                        @endhasanyrole
-
-                        {{-- Módulo Logística: Solo SuperAdmin, Admin --}}
-                        @hasanyrole('SUPERADMIN|ADMINISTRADOR|super-admin|administrador|almacen|compras')
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                <i class="fa-solid fa-boxes-stacked"></i> Logística
-                            </a>
-                            <ul class="dropdown-menu shadow">
-                                <li>
-                                    <a class="dropdown-item {{ request()->routeIs('inventory.*', 'monthly-inventory-counts.*') ? 'bg-primary text-white' : '' }}" href="{{ route('inventory.index') }}">
-                                        <i class="fa-solid fa-warehouse me-2"></i> Inventario General
-                                    </a>
-                                </li>
-                                <li><a class="dropdown-item" href="{{ route('inventory.index') }}#productos"><i class="fa-solid fa-box-open me-2"></i> Productos e Insumos</a></li>
-                                <li><a class="dropdown-item" href="{{ route('inventory.index') }}#lotes"><i class="fa-solid fa-vials me-2"></i> Lotes y Saldos</a></li>
-                                <li><a class="dropdown-item" href="{{ route('inventory.index') }}#kardex"><i class="fa-solid fa-clipboard-list me-2"></i> Kardex</a></li>
-                                <li><a class="dropdown-item {{ request()->routeIs('monthly-inventory-counts.*') ? 'bg-primary text-white' : '' }}" href="{{ route('monthly-inventory-counts.index') }}"><i class="fa-solid fa-calendar-check me-2"></i> Inventarios mensuales</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="#"><i class="fa-solid fa-truck-ramp-box me-2"></i> Proveedores</a></li>
-                            </ul>
-                        </li>
-                        @endhasanyrole
-                    </ul>
+                    @include('layouts.partials.navigation')
 
                     <ul class="navbar-nav ms-auto align-items-center">
                         <li class="nav-item dropdown user-pill">
@@ -246,7 +103,6 @@
                             </a>
 
                             <div class="dropdown-menu dropdown-menu-end mt-2 shadow border-0">
-                                <a class="dropdown-item" href="#"><i class="fa-solid fa-id-card me-2"></i> Mi Perfil</a>
                                 <a class="dropdown-item" href="{{ route('settings.index') }}"><i class="fa-solid fa-gears me-2"></i> Configuración</a>
                                 <div class="dropdown-divider"></div>
                                 <a class="dropdown-item text-danger" href="{{ route('logout') }}"
