@@ -20,7 +20,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->unique(['exam_id', 'product_id', 'warehouse_id'], 'exam_consumable_unique_recipe');
-            $table->index(['exam_id', 'auto_consume', 'is_active']);
+            $table->index(['exam_id', 'auto_consume', 'is_active'], 'exam_req_auto_active_idx');
         });
 
         Schema::create('lab_consumption_attempts', function (Blueprint $table) {

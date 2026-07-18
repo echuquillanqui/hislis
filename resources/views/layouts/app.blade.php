@@ -91,7 +91,7 @@
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
                         
                         {{-- Módulo HIS: Solo SuperAdmin, Admin, Recepcion y Medico --}}
-                        @hasanyrole('SUPERADMIN|ADMINISTRADOR|RECEPCION|MEDICO')
+                        @hasanyrole('SUPERADMIN|ADMINISTRADOR|RECEPCION|MEDICO|super-admin|administrador|recepcion|tecnico-laboratorio|responsable-area|profesional-validador')
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                                 <i class="fa-solid fa-hospital-user"></i> HIS (Pacientes)
@@ -168,41 +168,41 @@
                         @endhasanyrole
 
                         {{-- Módulo LIS: Solo SuperAdmin, Admin y Laboratorio --}}
-                        @hasanyrole('SUPERADMIN|ADMINISTRADOR|LABORATORIO')
+                        @hasanyrole('SUPERADMIN|ADMINISTRADOR|LABORATORIO|super-admin|administrador|tecnico-laboratorio|responsable-area|profesional-validador|microbiologia')
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                <i class="fa-solid fa-microscope"></i> LIS (Laboratorio)
+                            <a class="nav-link dropdown-toggle {{ request()->routeIs('specialty_labs.*', 'lab_exams.*') ? 'active bg-primary text-white' : '' }}" href="#" role="button" data-bs-toggle="dropdown">
+                                <i class="fa-solid fa-microscope {{ request()->routeIs('specialty_labs.*', 'lab_exams.*') ? 'text-white' : '' }}"></i> LIS (Laboratorio)
                             </a>
                             <ul class="dropdown-menu shadow">
 
                                 <li>
-                                    <a class="dropdown-item py-2" href="{{ route('specialty_labs.index') }}">
-                                        <i class="fa-solid fa-microscope me-2 text-muted"></i> Especialidades
+                                    <a class="dropdown-item py-2 {{ request()->routeIs('specialty_labs.*') ? 'bg-primary text-white' : '' }}" href="{{ route('specialty_labs.index') }}">
+                                        <i class="fa-solid fa-microscope me-2 {{ request()->routeIs('specialty_labs.*') ? 'text-white' : 'text-muted' }}"></i> Especialidades
                                     </a>
                                 </li>
 
                                 <li>
-                                    <a class="dropdown-item py-2" href="{{ route('lab_exams.index') }}">
-                                        <i class="fa-solid fa-list-check me-2 text-muted"></i> Catálogo de Exámenes
+                                    <a class="dropdown-item py-2 {{ request()->routeIs('lab_exams.*') ? 'bg-primary text-white' : '' }}" href="{{ route('lab_exams.index') }}">
+                                        <i class="fa-solid fa-list-check me-2 {{ request()->routeIs('lab_exams.*') ? 'text-white' : 'text-muted' }}"></i> Catálogo de Exámenes
                                     </a>
                                 </li>
+                                <li><a class="dropdown-item py-2" href="{{ route('inventory.index') }}#productos"><i class="fa-solid fa-prescription-bottle-medical me-2 text-muted"></i> Insumos y reactivos</a></li>
+                                <li><a class="dropdown-item py-2" href="{{ route('inventory.index') }}#kardex"><i class="fa-solid fa-clipboard-list me-2 text-muted"></i> Kardex de consumos</a></li>
                                 <li><a class="dropdown-item" href="#"><i class="fa-solid fa-vial me-2"></i> Toma de Muestras</a></li>
                                 <li><a class="dropdown-item" href="#"><i class="fa-solid fa-flask me-2"></i> Ingreso de Resultados</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="#"><i class="fa-solid fa-list-check me-2"></i> Catálogo de Exámenes</a></li>
                             </ul>
                         </li>
                         @endhasanyrole
 
                         {{-- Módulo Caja: Solo SuperAdmin, Admin y Cajero --}}
-                        @hasanyrole('SUPERADMIN|ADMINISTRADOR|CAJERO')
+                        @hasanyrole('SUPERADMIN|ADMINISTRADOR|CAJERO|super-admin|administrador|caja')
                         <li class="nav-item">
                             <a class="nav-link" href="#"><i class="fa-solid fa-cash-register"></i> Ventas/Caja</a>
                         </li>
                         @endhasanyrole
 
                         {{-- Módulo Logística: Solo SuperAdmin, Admin --}}
-                        @hasanyrole('SUPERADMIN|ADMINISTRADOR')
+                        @hasanyrole('SUPERADMIN|ADMINISTRADOR|super-admin|administrador|almacen|compras')
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                                 <i class="fa-solid fa-boxes-stacked"></i> Logística
