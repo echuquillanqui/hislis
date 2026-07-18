@@ -19,4 +19,5 @@ class LabOrder extends Model
     public function tariff(): BelongsTo { return $this->belongsTo(Tariff::class); }
     public function items(): HasMany { return $this->hasMany(LabOrderItem::class); }
     public function samples(): HasMany { return $this->hasMany(LabSample::class); }
+    public function cashMovements(): HasMany { return $this->hasMany(CashMovement::class); }
 }
