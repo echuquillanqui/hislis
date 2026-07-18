@@ -15,6 +15,7 @@ use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\BundleController;
 use App\Http\Controllers\VoucherController;
 use App\Http\Controllers\InventoryDashboardController;
+use App\Http\Controllers\MonthlyInventoryCountController;
 
 /*
 |--------------------------------------------------------------------------
@@ -64,6 +65,8 @@ Route::group(['middleware' => ['auth']], function () {
 
         Route::resource('vouchers', VoucherController::class);
         Route::get('inventory', [InventoryDashboardController::class, 'index'])->name('inventory.index');
+        Route::resource('monthly-inventory-counts', MonthlyInventoryCountController::class)->only(['index', 'store', 'show', 'update'])->parameters(['monthly-inventory-counts' => 'monthlyInventoryCount']);
+        Route::post('monthly-inventory-counts/{monthlyInventoryCount}/close', [MonthlyInventoryCountController::class, 'close'])->name('monthly-inventory-counts.close');
 
 
     });

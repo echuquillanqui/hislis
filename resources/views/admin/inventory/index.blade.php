@@ -5,7 +5,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h1 class="h3 mb-1">Logística e Inventario</h1>
-            <p class="text-muted mb-0">Opciones habilitadas para la fase 1|1 del inventario.</p>
+            <p class="text-muted mb-0">Opciones habilitadas para la fase 12 del inventario.</p>
         </div>
     </div>
 
@@ -17,6 +17,7 @@
             ['id' => 'lotes', 'label' => 'Lotes', 'value' => $lotsCount, 'icon' => 'fa-vials', 'text' => 'Control por lote, vencimiento y estado.'],
             ['id' => 'saldos', 'label' => 'Saldos', 'value' => $balancesCount, 'icon' => 'fa-scale-balanced', 'text' => 'Existencias por producto, almacén y lote.'],
             ['id' => 'kardex', 'label' => 'Kardex', 'value' => $kardexCount, 'icon' => 'fa-clipboard-list', 'text' => 'Trazabilidad auditable de movimientos.'],
+            ['id' => 'mensuales', 'label' => 'Inventarios mensuales', 'value' => $monthlyCountsCount, 'icon' => 'fa-calendar-check', 'text' => 'Conteos físicos, diferencias, ajustes aprobados y cierre mensual.', 'url' => route('monthly-inventory-counts.index')],
         ] as $card)
             <div class="col-12 col-md-6 col-xl-4">
                 <div id="{{ $card['id'] }}" class="card h-100 shadow-sm border-0">
@@ -31,6 +32,7 @@
                             </div>
                         </div>
                         <p class="text-muted mt-3 mb-0">{{ $card['text'] }}</p>
+                        @isset($card['url'])<a href="{{ $card['url'] }}" class="btn btn-sm btn-outline-primary mt-3">Abrir módulo</a>@endisset
                     </div>
                 </div>
             </div>
