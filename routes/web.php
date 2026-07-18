@@ -14,6 +14,7 @@ use App\Http\Controllers\LabExamController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\BundleController;
 use App\Http\Controllers\VoucherController;
+use App\Http\Controllers\InventoryDashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -62,6 +63,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('vouchers/{voucher}/print', [VoucherController::class, 'printTicket'])->name('vouchers.print');
 
         Route::resource('vouchers', VoucherController::class);
+        Route::get('inventory', [InventoryDashboardController::class, 'index'])->name('inventory.index');
 
 
     });
