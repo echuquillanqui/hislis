@@ -48,6 +48,11 @@ class Exam extends Model
 
     public function template() { return $this->belongsTo(Template::class); }
 
+    public function consumableRequirements(): HasMany
+    {
+        return $this->hasMany(ExamConsumableRequirement::class);
+    }
+
     public function tariffItems(): MorphMany
     {
         return $this->morphMany(TariffItem::class, 'tariffable');
