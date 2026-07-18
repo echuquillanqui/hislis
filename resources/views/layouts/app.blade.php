@@ -201,6 +201,15 @@
                         </li>
                         @endhasanyrole
 
+                        {{-- Módulo Gerencial: KPIs y alertas --}}
+                        @hasanyrole('SUPERADMIN|ADMINISTRADOR|super-admin|administrador|gerencia|auditor')
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('dashboard.management.*') ? 'active bg-primary text-white' : '' }}" href="{{ route('dashboard.management.index') }}">
+                                <i class="fa-solid fa-chart-line {{ request()->routeIs('dashboard.management.*') ? 'text-white' : '' }}"></i> Dashboard
+                            </a>
+                        </li>
+                        @endhasanyrole
+
                         {{-- Módulo Logística: Solo SuperAdmin, Admin --}}
                         @hasanyrole('SUPERADMIN|ADMINISTRADOR|super-admin|administrador|almacen|compras')
                         <li class="nav-item dropdown">

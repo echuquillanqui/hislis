@@ -56,6 +56,7 @@ class LisRolesAndPermissionsSeeder extends Seeder
             'finance.view',
             'finance.monthly-close',
             'dashboard.management.view',
+            'dashboard.management.export',
             'audit.view',
             'branches.manage',
             'areas.manage',
@@ -79,6 +80,10 @@ class LisRolesAndPermissionsSeeder extends Seeder
 
             if ($name === 'super-admin') {
                 $role->syncPermissions(Permission::all());
+            }
+
+            if (in_array($name, ['administrador', 'gerencia', 'auditor'], true)) {
+                $role->givePermissionTo(['dashboard.management.view', 'dashboard.management.export']);
             }
         }
     }
