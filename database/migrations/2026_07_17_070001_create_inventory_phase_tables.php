@@ -82,7 +82,7 @@ return new class extends Migration
                 $table->timestamp('occurred_at');
                 $table->timestamps();
 
-                $table->index(['product_id', 'warehouse_id', 'occurred_at']);
+                $table->index(['product_id', 'warehouse_id', 'occurred_at'], 'kardex_product_wh_date_idx');
                 $table->index(['reference_type', 'reference_id']);
             });
         }
