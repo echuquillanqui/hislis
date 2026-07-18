@@ -208,7 +208,15 @@
                                 <i class="fa-solid fa-boxes-stacked"></i> Logística
                             </a>
                             <ul class="dropdown-menu shadow">
-                                <li><a class="dropdown-item" href="#"><i class="fa-solid fa-warehouse me-2"></i> Inventario General</a></li>
+                                <li>
+                                    <a class="dropdown-item {{ request()->routeIs('inventory.*') ? 'bg-primary text-white' : '' }}" href="{{ route('inventory.index') }}">
+                                        <i class="fa-solid fa-warehouse me-2"></i> Inventario General
+                                    </a>
+                                </li>
+                                <li><a class="dropdown-item" href="{{ route('inventory.index') }}#productos"><i class="fa-solid fa-box-open me-2"></i> Productos e Insumos</a></li>
+                                <li><a class="dropdown-item" href="{{ route('inventory.index') }}#lotes"><i class="fa-solid fa-vials me-2"></i> Lotes y Saldos</a></li>
+                                <li><a class="dropdown-item" href="{{ route('inventory.index') }}#kardex"><i class="fa-solid fa-clipboard-list me-2"></i> Kardex</a></li>
+                                <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="#"><i class="fa-solid fa-truck-ramp-box me-2"></i> Proveedores</a></li>
                             </ul>
                         </li>
